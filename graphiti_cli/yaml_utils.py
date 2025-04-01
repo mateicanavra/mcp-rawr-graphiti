@@ -11,7 +11,7 @@ from ruamel.yaml.comments import CommentedMap
 import os
 from typing import Optional, List, Dict, Any
 
-from .core import get_mcp_server_dir
+from .core import get_repo_root
 from constants import (
     # Colors for output
     RED, GREEN, YELLOW, CYAN, NC,
@@ -193,19 +193,19 @@ def update_registry_logic(
 
 # --- Logic from generate_compose.py ---
 def generate_compose_logic(
-    mcp_server_dir: Path
+    repo_root: Path
 ):
     """
     Generates the final docker-compose.yml by merging base and project configs.
     Corresponds to the logic in the old generate_compose.py.
     
     Args:
-        mcp_server_dir (Path): Path to the mcp_server directory
+        repo_root (Path): Path to the repository root directory
     """
     print("Generating docker-compose.yml...")
-    base_compose_path = mcp_server_dir / BASE_COMPOSE_FILENAME
-    projects_registry_path = mcp_server_dir / PROJECTS_REGISTRY_FILENAME
-    output_compose_path = mcp_server_dir / DOCKER_COMPOSE_OUTPUT_FILENAME
+    base_compose_path = repo_root / BASE_COMPOSE_FILENAME
+    projects_registry_path = repo_root / PROJECTS_REGISTRY_FILENAME
+    output_compose_path = repo_root / DOCKER_COMPOSE_OUTPUT_FILENAME
 
     # Load base compose file
     compose_data = load_yaml_file(base_compose_path, safe=False)

@@ -49,8 +49,9 @@ def _find_repo_root() -> Optional[Path]:
     Internal function to find the repository root directory.
     
     The repository root is identified by the presence of:
-    - A mcp_server/ directory
-    - Within mcp_server/: entity_types/ directory
+    - A graphiti_cli/ directory
+    - A entity_types/ directory
+    - A pyproject.toml file
     
     Returns:
         Optional[Path]: The absolute path to the repository root, or None if not found.
@@ -63,11 +64,11 @@ def _find_repo_root() -> Optional[Path]:
         print(f"{YELLOW}Warning: {ENV_REPO_PATH} is set but points to invalid path: {repo_path}{NC}")
     
     # Try to find the repo root automatically based on script location
-    # Current script should be in mcp_server/graphiti_cli/core.py
+    # Current script should be in graphiti_cli/core.py
     current_file = Path(__file__).resolve()
-    if "mcp_server" in current_file.parts and "graphiti_cli" in current_file.parts:
-        # Go up to the 'mcp_server' parent, then one more level to reach repo root
-        potential_root = current_file.parents[2]  # Two levels up from core.py
+    if "graphiti_cli" in current_file.parts:
+        # Go up to the parent of graphiti_cli to reach repo root
+        potential_root = current_file.parents[1]  # One level up from core.py
         if _validate_repo_path(potential_root):
             return potential_root
         
@@ -97,10 +98,11 @@ def _validate_repo_path(path: Path) -> bool:
         return False
     
     # Check for essential directories
-    mcp_server_dir = path / DIR_MCP_SERVER
-    entity_types_dir = mcp_server_dir / DIR_ENTITY_TYPES
+    graphiti_cli_dir = path / "graphiti_cli"
+    entity_types_dir = path / DIR_ENTITY_TYPES
+    pyproject_file = path / FILE_PYPROJECT_TOML
     
-    return mcp_server_dir.is_dir() and entity_types_dir.is_dir()
+    return graphiti_cli_dir.is_dir() and entity_types_dir.is_dir() and pyproject_file.is_file()
 
 def get_repo_root() -> Path:
     """
@@ -119,12 +121,12 @@ def get_repo_root() -> Path:
 
 def get_mcp_server_dir() -> Path:
     """
-    Get the mcp_server directory path.
+    Get the server directory path (which is now the repository root).
     
     Returns:
-        Path: The absolute path to the mcp_server directory
+        Path: The absolute path to the repository root
     """
-    return get_repo_root() / "mcp_server"
+    return get_repo_root()
 
 # --- Process Execution Functions ---
 def run_command(
@@ -196,7 +198,7 @@ def run_docker_compose(
         log_level (str): Log level to set in environment
         detached (bool): Whether to add the -d flag for detached mode
     """
-    mcp_server_dir = get_mcp_server_dir()
+    repo_root = get_repo_root()
     
     # Ensure the docker-compose.yml file exists
     ensure_docker_compose_file()
@@ -208,27 +210,27 @@ def run_docker_compose(
     # Prepare full command
     cmd = ["docker", "compose"] + subcmd
     
-    print(f"Running Docker Compose from: {CYAN}{mcp_server_dir}{NC}")
+    print(f"Running Docker Compose from: {CYAN}{repo_root}{NC}")
     print(f"Command: {' '.join(cmd)}")
     if log_level != LogLevel.info.value:
         print(f"Log level: {CYAN}{log_level}{NC}")
     
     # Execute the command - Pass the log level as an environment variable
     env = {"GRAPHITI_LOG_LEVEL": log_level}
-    run_command(cmd, check=True, env=env, cwd=mcp_server_dir)
+    run_command(cmd, check=True, env=env, cwd=repo_root)
 
 def ensure_docker_compose_file() -> None:
     """
     Ensure that the docker-compose.yml file exists by generating it if necessary.
     """
-    mcp_server_dir = get_mcp_server_dir()
-    compose_file = mcp_server_dir / "docker-compose.yml"
+    repo_root = get_repo_root()
+    compose_file = repo_root / "docker-compose.yml"
     
     # Use our Python utility (to be implemented in yaml_utils.py) instead of the script
     # Will be implemented after yaml_utils.py is created
     from . import yaml_utils
     try:
-        yaml_utils.generate_compose_logic(mcp_server_dir)  # Generate with default log level initially
+        yaml_utils.generate_compose_logic(repo_root)  # Generate with default log level initially
     except Exception as e:
         print(f"{YELLOW}Continuing with existing file if it exists.{NC}")
     
@@ -245,12 +247,11 @@ def ensure_dist_for_build() -> None:
     If so, it ensures the dist directory exists and copies the wheel files.
     """
     repo_root = get_repo_root()
-    mcp_server_dir = get_mcp_server_dir()
     
     print(f"{BOLD}Checking build configuration...{NC}")
     
     # Check pyproject.toml to see if we're using local wheel
-    pyproject_path = mcp_server_dir / FILE_PYPROJECT_TOML
+    pyproject_path = repo_root / FILE_PYPROJECT_TOML
     try:
         with open(pyproject_path, 'r') as f:
             pyproject_content = f.read()
@@ -270,31 +271,22 @@ def ensure_dist_for_build() -> None:
         print(f"{CYAN}Local graphiti-core wheel configuration detected.{NC}")
         
         # Source and target paths
-        repo_dist = repo_root / DIR_DIST
-        server_dist = mcp_server_dir / DIR_DIST
+        dist_dir = repo_root / DIR_DIST
         
-        # Check if source dist exists
-        if not repo_dist.is_dir():
-            print(f"{RED}Error: dist directory not found at {repo_dist}{NC}")
+        # Check if dist exists
+        if not dist_dir.is_dir():
+            print(f"{RED}Error: dist directory not found at {dist_dir}{NC}")
             print(f"Please build the graphiti-core wheel first.")
             sys.exit(1)
         
         # Find wheel files
-        wheel_files = list(repo_dist.glob("*.whl"))
+        wheel_files = list(dist_dir.glob("*.whl"))
         if not wheel_files:
-            print(f"{RED}Error: No wheel files found in {repo_dist}{NC}")
+            print(f"{RED}Error: No wheel files found in {dist_dir}{NC}")
             print(f"Please build the graphiti-core wheel first.")
             sys.exit(1)
         
-        # Create target directory if needed
-        server_dist.mkdir(exist_ok=True, parents=True)
-        
-        # Copy wheel files
-        print(f"Copying wheel files from {CYAN}{repo_dist}{NC} to {CYAN}{server_dist}{NC}")
-        for wheel_file in wheel_files:
-            shutil.copy2(wheel_file, server_dist)
-        
-        print(f"{GREEN}Dist directory prepared for Docker build.{NC}")
+        print(f"{GREEN}Dist directory verified for Docker build.{NC}")
     
     except Exception as e:
         print(f"{RED}Error checking build configuration: {e}{NC}")
