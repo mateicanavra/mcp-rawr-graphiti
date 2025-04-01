@@ -1,0 +1,156 @@
+# docker-compose.template.yml
+# This is a template file for setting up Graphiti MCP servers with Docker Compose.
+# Copy this file to docker-compose.yml and customize as needed for your environment.
+version: "3.8"
+
+# --- Base Definitions ---
+# These YAML anchors provide reusable configuration blocks
+
+x-mcp-healthcheck:
+    &mcp-healthcheck # Healthcheck for all MCP servers
+    test:
+        [
+            "CMD-SHELL",
+            "curl -s -I --max-time 1 http://localhost:${MCP_ROOT_CONTAINER_PORT:-8000}/sse | grep -q 'text/event-stream' || exit 1",
+        ]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+    start_period: 5s
+
+x-neo4j-connection: &neo4j-connection
+    # Neo4j connection details shared by all MCP servers
+    NEO4J_URI: "bolt://neo4j:${NEO4J_CONTAINER_BOLT_PORT:-7687}"
+    NEO4J_USER: "${NEO4J_USER}" # Required by neo4j service
+    NEO4J_PASSWORD: "${NEO4J_PASSWORD}" # Required by neo4j service 
+
+x-mcp-env: &mcp-env 
+    # Common environment variables for all MCP servers
+    MODEL_NAME: "${MODEL_NAME:-gpt-4o}"
+    OPENAI_API_KEY: ${OPENAI_API_KEY?Please set OPENAI_API_KEY in your .env file}
+    OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+    GRAPHITI_LOG_LEVEL: ${GRAPHITI_LOG_LEVEL:-info}
+    PATH: "/app:/root/.local/bin:${PATH}"
+
+# Base definition for ALL graphiti MCP services
+x-graphiti-mcp-base: &graphiti-mcp-base
+    build:
+        context: .
+        dockerfile: Dockerfile # Dockerfile must include the entrypoint.sh script
+    env_file:
+        - path: .env
+          required: true # Required by default (can be set to false if you want to provide all env vars directly)
+    environment:
+        <<: [*mcp-env, *neo4j-connection] # Merge environment variable blocks
+    healthcheck:
+        <<: *mcp-healthcheck
+    restart: unless-stopped
+    # Command execution is handled by entrypoint.sh using environment variables
+
+# Base for custom MCP services that depend on the root service
+x-graphiti-mcp-custom-base: &graphiti-mcp-custom-base
+    <<: *graphiti-mcp-base # Inherit base configuration
+    depends_on:
+        neo4j:
+            condition: service_healthy
+        graphiti-mcp-root: # All custom services depend on the root service
+            condition: service_healthy
+
+# --- Services ---
+services:
+    # --- Database Service ---
+    neo4j:
+        image: neo4j:5.26.0
+        container_name: ${NEO4J_CONTAINER_NAME:-graphiti-mcp-neo4j}
+        ports:
+            - "${NEO4J_HOST_HTTP_PORT:-7474}:${NEO4J_CONTAINER_HTTP_PORT:-7474}" # HTTP interface
+            - "${NEO4J_HOST_BOLT_PORT:-7687}:${NEO4J_CONTAINER_BOLT_PORT:-7687}" # Bolt protocol
+        environment:
+            - NEO4J_AUTH=${NEO4J_USER?Please set NEO4J_USER in your .env file}/${NEO4J_PASSWORD?Please set NEO4J_PASSWORD in your .env file}
+            - NEO4J_server_memory_heap_initial__size=${NEO4J_HEAP_INITIAL:-512m}
+            - NEO4J_server_memory_heap_max__size=${NEO4J_HEAP_MAX:-1G}
+            - NEO4J_server_memory_pagecache_size=${NEO4J_PAGECACHE:-512m}
+        volumes:
+            - neo4j_data:/data # Persists graph data
+            - neo4j_logs:/logs # Stores Neo4j logs
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "-O",
+                    "/dev/null",
+                    "http://localhost:${NEO4J_CONTAINER_HTTP_PORT:-7474}",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+    # --- Root MCP Server (Required) ---
+    # This is the primary MCP server instance required for all setups
+    graphiti-mcp-root:
+        <<: *graphiti-mcp-base
+        container_name: ${MCP_ROOT_CONTAINER_NAME:-graphiti-mcp-root}
+        depends_on:
+            neo4j:
+                condition: service_healthy
+        ports:
+            - "${MCP_ROOT_HOST_PORT:-8000}:${MCP_ROOT_CONTAINER_PORT:-8000}"
+        environment:
+            # Configuration for entrypoint.sh
+            MCP_GROUP_ID: "root" # Unique group ID for this MCP instance
+            MCP_USE_CUSTOM_ENTITIES: "true"
+            MCP_ENTITY_TYPE_DIR: "entity_types/base"
+            # MCP_ENTITY_TYPES: "" # Use this to specify specific entity types
+            # NEO4J_DESTROY_ENTIRE_GRAPH can be set to "true" to clear ALL Neo4j data (DANGER!)
+            # Not recommended to define here - use .env temporarily if needed
+
+    # --- Custom MCP Server Examples ---
+    # NAMING CONVENTION:
+    # - Service name: mcp-[project-name] (e.g., mcp-myproject)
+    # - Container name: MCP_[PROJECT]_CONTAINER_NAME in .env (e.g., MCP_MYPROJECT_CONTAINER_NAME=mcp-myproject)
+    # - Port: MCP_HOST_PORT_[PROJECT] in .env, incrementing from 8001 (e.g., MCP_HOST_PORT_MYPROJECT=8001)
+    # - Group ID: A unique identifier for your project's knowledge graph (e.g., "myproject")
+
+    # --- Custom MCP Server Example 1 (Optional) ---
+    # Uncomment this section to add a custom MCP server instance
+    # mcp-custom-1:
+    #     <<: *graphiti-mcp-custom-base
+    #     container_name: ${MCP_CUSTOM_1_CONTAINER_NAME}
+    #     ports:
+    #         - "${MCP_CUSTOM_HOST_PORT_1}:${MCP_ROOT_CONTAINER_PORT:-8000}"
+    #     environment:
+    #         MCP_GROUP_ID: "custom-group-1" # Unique ID for this knowledge graph
+    #         MCP_USE_CUSTOM_ENTITIES: "true"
+    #         MCP_ENTITY_TYPE_DIR: "entity_types/custom_1"
+    #         # MCP_ENTITY_TYPES: "" # Use this to specify specific entity types
+    #         # NEO4J_DESTROY_ENTIRE_GRAPH can be set to "true" to clear ALL Neo4j data
+    #         # Not recommended to define here - use .env temporarily if needed
+
+    # --- Custom MCP Server Example 2 (Optional) ---
+    # This example shows using specific entity types instead of a directory
+    # mcp-custom-2:
+    #     <<: *graphiti-mcp-custom-base
+    #     container_name: ${MCP_CUSTOM_2_CONTAINER_NAME}
+    #     ports:
+    #         - "${MCP_CUSTOM_HOST_PORT_2}:${MCP_ROOT_CONTAINER_PORT:-8000}"
+    #     environment:
+    #         MCP_GROUP_ID: "another-custom-group"
+    #         MCP_USE_CUSTOM_ENTITIES: "true"
+    #         # MCP_ENTITY_TYPE_DIR: ""
+    #         MCP_ENTITY_TYPES: "SpecificTypeA SpecificTypeB"
+    #         # NEO4J_DESTROY_ENTIRE_GRAPH can be set to "true" to clear ALL Neo4j data
+    #         # Not recommended to define here - use .env temporarily if needed
+
+    # --- Add your custom MCP server definitions below ---
+    # Copy one of the examples above and modify as needed
+    # Each service must have a unique:
+    # - container_name
+    # - port mapping
+    # - MCP_GROUP_ID
+
+# --- Persistent Storage ---
+volumes:
+    neo4j_data: # Persists Neo4j graph data between container restarts
+    neo4j_logs: # Persists Neo4j logs between container restarts 

@@ -1,0 +1,28 @@
+    # (Keep your existing FROM, WORKDIR, apt-get, uv install, ENV PATH, COPY pyproject, uv sync, COPY code lines...)
+
+    # --- Add Entrypoint Script ---
+    # Copy the entrypoint script into the working directory
+    COPY entrypoint.sh .
+    # Make it executable
+    RUN chmod +x ./entrypoint.sh
+    # ---------------------------
+
+    # Set environment variables (keep PYTHONUNBUFFERED=1)
+    ENV PYTHONUNBUFFERED=1
+
+    # Create a non-root user and group (keep this section)
+    RUN groupadd --system appuser && useradd --system --gid appuser appuser
+
+    # Change ownership of the app directory to the new user
+    # Ensure entrypoint.sh is also owned correctly
+    RUN chown -R appuser:appuser /app
+
+    # Switch to the non-root user (keep this)
+    USER appuser
+
+    # --- Set Entrypoint ---
+    # Use the script as the main container command
+    ENTRYPOINT ["./entrypoint.sh"]
+
+    # Remove any previous CMD instruction like:
+    # CMD ["uv", "run", "graphiti_mcp_server.py"]

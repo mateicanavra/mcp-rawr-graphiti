@@ -1,0 +1,102 @@
+# base-compose.yaml
+# Base structure for the Docker Compose configuration, including static services and anchors.
+
+version: "3.8"
+
+# --- Base Definitions (Anchors) ---
+# Anchors are defined here and will be loaded by the Python script.
+
+x-mcp-healthcheck: &mcp-healthcheck
+  test:
+    [
+      "CMD-SHELL",
+      "curl -s -I --max-time 1 http://localhost:${MCP_ROOT_CONTAINER_PORT:-8000}/sse | grep -q 'text/event-stream' || exit 1",
+    ]
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 5s
+
+x-neo4j-connection: &neo4j-connection
+  NEO4J_URI: "bolt://neo4j:${NEO4J_CONTAINER_BOLT_PORT:-7687}"
+  NEO4J_USER: "${NEO4J_USER}"
+  NEO4J_PASSWORD: "${NEO4J_PASSWORD}"
+
+x-mcp-env: &mcp-env
+  MODEL_NAME: "${MODEL_NAME:-gpt-4o}"
+  OPENAI_API_KEY: ${OPENAI_API_KEY?Please set OPENAI_API_KEY in your .env file}
+  OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+  GRAPHITI_LOG_LEVEL: ${GRAPHITI_LOG_LEVEL:-info}
+  PATH: "/app:/root/.local/bin:${PATH}"
+
+x-graphiti-mcp-base: &graphiti-mcp-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - path: .env
+      required: true
+  environment:
+    <<: [*mcp-env, *neo4j-connection] # Aliases refer to anchors above
+  healthcheck:
+    <<: *mcp-healthcheck             # Alias refers to anchor above
+  restart: unless-stopped
+
+x-graphiti-mcp-custom-base: &graphiti-mcp-custom-base
+  <<: *graphiti-mcp-base # Alias refers to anchor above
+  depends_on:
+    neo4j:
+      condition: service_healthy
+    graphiti-mcp-root:
+      condition: service_healthy
+
+# --- Services (Static Ones) ---
+services:
+  # --- Database ---
+  neo4j:
+    image: neo4j:5.26.0
+    container_name: ${NEO4J_CONTAINER_NAME:-graphiti-mcp-neo4j}
+    ports:
+      - "${NEO4J_HOST_HTTP_PORT:-7474}:${NEO4J_CONTAINER_HTTP_PORT:-7474}"
+      - "${NEO4J_HOST_BOLT_PORT:-7687}:${NEO4J_CONTAINER_BOLT_PORT:-7687}"
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER?Please set NEO4J_USER in your .env file}/${NEO4J_PASSWORD?Please set NEO4J_PASSWORD in your .env file}
+      - NEO4J_server_memory_heap_initial__size=${NEO4J_HEAP_INITIAL:-512m}
+      - NEO4J_server_memory_heap_max__size=${NEO4J_HEAP_MAX:-1G}
+      - NEO4J_server_memory_pagecache_size=${NEO4J_PAGECACHE:-512m}
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-O",
+          "/dev/null",
+          "http://localhost:${NEO4J_CONTAINER_HTTP_PORT:-7474}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # --- Root MCP Server (Required) ---
+  graphiti-mcp-root:
+    <<: *graphiti-mcp-base # Alias refers to anchor above
+    container_name: ${MCP_ROOT_CONTAINER_NAME:-graphiti-mcp-root}
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    ports:
+      - "${MCP_ROOT_HOST_PORT:-8000}:${MCP_ROOT_CONTAINER_PORT:-8000}"
+    environment:
+      # Specific env vars merged with base env vars via the alias above
+      MCP_GROUP_ID: "root"
+      MCP_USE_CUSTOM_ENTITIES: "true"
+      MCP_ENTITY_TYPE_DIR: "entity_types/base"
+
+# --- Volumes ---
+volumes:
+  neo4j_data: # Persists Neo4j graph data
+  neo4j_logs: # Persists Neo4j logs 

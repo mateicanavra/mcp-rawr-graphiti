@@ -1,0 +1,33 @@
+[project]
+name = "mcp-rawr-graphiti"
+version = "0.1.0"
+description = "Graphiti MCP Server"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.5.0",
+    "openai>=1.68.2",
+    # For local development with local graphiti-core wheel:
+    # "graphiti-core @ file:///dist/graphiti_core-0.8.5-py3-none-any.whl",
+    # For production/normal use (uncomment this and comment out the above):
+    "graphiti-core>=0.8.5",
+    "ruamel.yaml>=0.17.21",
+    "typer[all]>=0.9.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+graphiti = "graphiti_cli.main:app"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+# Explicitly specify packages to include
+[tool.setuptools.packages.find]
+where = ["."]  # Look in the current directory (mcp_server)
+include = ["graphiti_cli"]  # Only include the CLI package
+
+# Add py_modules to include individual Python files (like constants.py)
+[tool.setuptools]
+py-modules = ["constants"]

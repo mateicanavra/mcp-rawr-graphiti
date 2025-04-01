@@ -1,0 +1,47 @@
+{
+  "output": {
+    "filePath": "graphiti-mcp-repo.md",
+    "style": "markdown",
+    "parsableStyle": false,
+    "fileSummary": true,
+    "directoryStructure": true,
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "compress": false,
+    "topFilesLength": 5,
+    "showLineNumbers": false,
+    "copyToClipboard": false,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100
+    }
+  },
+  "include": [],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      ".venv/**",
+      "uv.lock",
+      "dist/**",
+      ".ai/**",
+      "llm_cache/**",
+      "scripts/README.md",
+      "README.md",
+      "docs/**",
+      "*.egg-info/**",
+      "__pycache__/**",
+      "*.pyc",
+      "*.pyo",
+      ".python-version",
+      ".env",
+      "*.log"
+    ]
+  },
+  "security": {
+    "enableSecurityCheck": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  }
+}

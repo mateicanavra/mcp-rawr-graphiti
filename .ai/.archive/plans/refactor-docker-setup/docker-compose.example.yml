@@ -1,0 +1,144 @@
+# docker-compose.yml
+version: "3.8"
+
+# --- Base Definitions ---
+
+x-mcp-healthcheck:
+    &mcp-healthcheck # Healthcheck targets the internal MCP port/endpoint, using the default/env var
+    test:
+        [
+            "CMD-SHELL",
+            "curl -s -I --max-time 1 http://localhost:${MCP_ROOT_CONTAINER_PORT:-8000}/sse | grep -q 'text/event-stream' || exit 1",
+        ]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+    start_period: 5s
+
+x-neo4j-connection: &neo4j-connection
+    # Neo4j connection details. Uses the internal port defined by the neo4j service.
+    # User/Password are validated when starting the neo4j service itself.
+    NEO4J_URI: "bolt://neo4j:${NEO4J_CONTAINER_BOLT_PORT:-7687}"
+    NEO4J_USER: "${NEO4J_USER}" # Value required by neo4j service
+    NEO4J_PASSWORD: "${NEO4J_PASSWORD}" # Value required by neo4j service
+
+x-mcp-env: &mcp-env # Common environment variables for MCP servers
+    MODEL_NAME: "${MODEL_NAME:-gpt-4o}"
+    OPENAI_API_KEY: ${OPENAI_API_KEY?Please set OPENAI_API_KEY in your .env file} # Still required here as MCP needs it directly
+    OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+    GRAPHITI_LOG_LEVEL: ${GRAPHITI_LOG_LEVEL:-info}
+    PATH: "/app:/root/.local/bin:${PATH}" # Ensure app and uv paths are included
+
+# Base definition for ALL graphiti MCP services
+x-graphiti-mcp-base: &graphiti-mcp-base
+    build:
+        context: .
+        dockerfile: Dockerfile # Assumes Dockerfile sets up the entrypoint script
+    env_file:
+        - path: .env
+          required: false
+    environment:
+        # Merge common MCP env and neo4j connection details
+        <<: [*mcp-env, *neo4j-connection]
+    healthcheck:
+        <<: *mcp-healthcheck
+    restart: unless-stopped
+    # Execution is handled by the ENTRYPOINT script defined in the Dockerfile
+
+# Base definition specifically for CUSTOM graphiti MCP services
+x-graphiti-mcp-custom-base: &graphiti-mcp-custom-base
+    <<: *graphiti-mcp-base # Inherit all properties from the main base
+    depends_on:
+        # Custom servers depend on both Neo4j and the Core MCP server being healthy
+        neo4j:
+            condition: service_healthy
+        graphiti-mcp-core:
+            condition: service_healthy
+    # Environment variables specific to custom servers (added per-service) configure the entrypoint script
+
+# --- Services ---
+services:
+    # --- Database ---
+    neo4j:
+        image: neo4j:5.26.0
+        container_name: ${NEO4J_CONTAINER_NAME:-graphiti-mcp-neo4j}
+        ports:
+            # Expose Neo4j HTTP and Bolt ports, internal ports have defaults
+            - "${NEO4J_HOST_HTTP_PORT:-7474}:${NEO4J_CONTAINER_HTTP_PORT:-7474}" # HTTP
+            - "${NEO4J_HOST_BOLT_PORT:-7687}:${NEO4J_CONTAINER_BOLT_PORT:-7687}" # Bolt
+        environment:
+            # Enforce mandatory User/Password here. Memory settings configurable.
+            - NEO4J_AUTH=${NEO4J_USER?Please set NEO4J_USER in your .env file}/${NEO4J_PASSWORD?Please set NEO4J_PASSWORD in your .env file}
+            - NEO4J_server_memory_heap_initial__size=${NEO4J_HEAP_INITIAL:-512m}
+            - NEO4J_server_memory_heap_max__size=${NEO4J_HEAP_MAX:-1G}
+            - NEO4J_server_memory_pagecache_size=${NEO4J_PAGECACHE:-512m}
+        volumes:
+            - neo4j_data:/data
+            - neo4j_logs:/logs
+        healthcheck:
+            # Specific healthcheck for Neo4j HTTP interface using its internal port
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "-O",
+                    "/dev/null",
+                    "http://localhost:${NEO4J_CONTAINER_HTTP_PORT:-7474}",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+    # --- Core MCP Server (Required) ---
+    graphiti-mcp-core:
+        <<: *graphiti-mcp-base # Inherits from the main MCP base
+        container_name: ${MCP_CORE_CONTAINER_NAME:-graphiti-mcp-core}
+        depends_on:
+            neo4j:
+                condition: service_healthy
+        ports:
+            # Map host port to the default/env var internal MCP port
+            - "${MCP_HOST_PORT_CORE:-8000}:${MCP_ROOT_CONTAINER_PORT:-8000}"
+        environment:
+            # --- Configuration for entrypoint.sh ---
+            MCP_GROUP_ID: "core-api"
+            MCP_USE_CUSTOM_ENTITIES: "true"
+            MCP_ENTITY_TYPE_DIR: "entity_types/base"
+            # MCP_ENTITY_TYPES: "" # Explicitly empty/unset
+            MCP_DESTROY_GRAPH: "false" # Default to false
+
+    # --- Custom MCP Server Example 1 (Optional Template) ---
+    graphiti-mcp-custom-1:
+        <<: *graphiti-mcp-custom-base # Inherit from the CUSTOM MCP base
+        container_name: ${MCP_CUSTOM_1_CONTAINER_NAME:-graphiti-mcp-custom-1}
+        ports:
+            - "${MCP_CUSTOM_HOST_PORT_1:-8001}:${MCP_ROOT_CONTAINER_PORT:-8000}"
+        environment:
+            # --- Configuration for entrypoint.sh ---
+            MCP_GROUP_ID: "custom-group-1"
+            MCP_USE_CUSTOM_ENTITIES: "true"
+            MCP_ENTITY_TYPE_DIR: "entity_types/custom_1"
+            # MCP_ENTITY_TYPES: ""
+            MCP_DESTROY_GRAPH: "false" # Default to false
+
+    # --- Custom MCP Server Example 2 (Optional Template) ---
+    graphiti-mcp-custom-2:
+        <<: *graphiti-mcp-custom-base # Inherit from the CUSTOM MCP base
+        container_name: ${MCP_CUSTOM_2_CONTAINER_NAME:-graphiti-mcp-custom-2}
+        ports:
+            - "${MCP_CUSTOM_HOST_PORT_2:-8002}:${MCP_ROOT_CONTAINER_PORT:-8000}"
+        environment:
+            # --- Configuration for entrypoint.sh ---
+            MCP_GROUP_ID: "another-custom-group"
+            MCP_USE_CUSTOM_ENTITIES: "true"
+            # MCP_ENTITY_TYPE_DIR: ""
+            MCP_ENTITY_TYPES: "SpecificTypeA SpecificTypeB"
+            MCP_DESTROY_GRAPH: "false" # Default to false
+
+    # --- Add more custom MCP server definitions below following the pattern ---
+
+# --- Volumes ---
+volumes:
+    neo4j_data: # Persists Neo4j graph data
+    neo4j_logs: # Persists Neo4j logs
