@@ -97,9 +97,9 @@ def docker_compose_generate():
     Generate docker-compose.yml from base and project configs.
     """
     print(f"{core.BOLD}Generating docker-compose.yml from templates...{core.NC}")
-    mcp_server_dir = core.get_mcp_server_dir()
+    repo_root = core.get_repo_root()
     try:
-        yaml_utils.generate_compose_logic(mcp_server_dir)  # Generate with default level
+        yaml_utils.generate_compose_logic(repo_root)  # Generate with default level
         # Success message printed within generate_compose_logic
     except Exception as e:
         print(f"{core.RED}Error: Failed to generate docker-compose.yml file: {e}{core.NC}")
@@ -164,8 +164,8 @@ def init_project(project_name: str, target_dir: Path):
     setup_rules(project_name, target_dir)  # Call the rules setup logic
 
     # Update central registry
-    mcp_server_dir = core.get_mcp_server_dir()
-    registry_path = mcp_server_dir / "mcp-projects.yaml"
+    repo_root = core.get_repo_root()
+    registry_path = repo_root / "mcp-projects.yaml"
     print(f"Updating central project registry: {core.CYAN}{registry_path}{core.NC}")
     try:
         # Ensure paths are absolute before passing
@@ -196,8 +196,8 @@ def setup_rules(project_name: str, target_dir: Path):
         target_dir (Path): Target directory for the project
     """
     print(f"Setting up Graphiti Cursor rules for project '{core.CYAN}{project_name}{core.NC}' in {core.CYAN}{target_dir}{core.NC}")
-    mcp_server_dir = core.get_mcp_server_dir()
-    rules_source_dir = mcp_server_dir / "rules"
+    repo_root = core.get_repo_root()
+    rules_source_dir = repo_root / "rules"
     templates_source_dir = rules_source_dir / "templates"
     cursor_rules_dir = target_dir / ".cursor" / "rules" / "graphiti"
 
@@ -337,9 +337,9 @@ def create_entity_set(entity_name: str, target_dir: Path):
         print(f"{core.RED}Error: Entity file '{class_name}{ENTITY_FILE_EXTENSION}' already exists at: {entity_file_path}{core.NC}")
         sys.exit(1)
         
-    # Get path to template file from mcp_server
-    mcp_server_dir = core.get_mcp_server_dir()
-    example_template_path = mcp_server_dir / "entity_types" / "example" / "custom_entity_example.py"
+    # Get path to template file from repo
+    repo_root = core.get_repo_root()
+    example_template_path = repo_root / "entity_types" / "example" / "custom_entity_example.py"
     
     try:
         # Create the project entity directory if it doesn't exist
