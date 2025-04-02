@@ -24,9 +24,21 @@ from constants import (
     ENV_GRAPHITI_LOG_LEVEL,
     # Logging
     DEFAULT_LOG_LEVEL_STR,
-    # Entity template constants (these should remain local as they're specific to this module)
-    DIR_AI, DIR_GRAPH, DIR_ENTITIES, FILE_GIT_KEEP, REGEX_VALID_NAME
+    # Directory structure
+    DIR_AI, DIR_GRAPH, DIR_ENTITIES, FILE_GIT_KEEP, DIR_PROJECT_ASSETS,
+    # Validation
+    REGEX_VALID_NAME
 )
+
+# --- Project Assets Constants ---
+DIR_RULES = "rules"
+DIR_ENTITY_TEMPLATES = "entity_templates"
+DIR_EXAMPLES = "examples"
+DIR_TEMPLATES = "templates"
+FILE_CORE_RULE = "graphiti-mcp-core-rules.md"
+FILE_MAINT_RULE = "graphiti-knowledge-graph-maintenance.md"
+FILE_SCHEMA_TEMPLATE = "schema_template.py"
+FILE_ENTITY_EXAMPLE = "custom_entity_example.py"
 
 # --- Entity Template Constants ---
 ENTITY_CLASS_PATTERN = "class Product(BaseModel):"
@@ -278,22 +290,23 @@ def setup_rules(project_name: str, target_dir: Path):
     Set up Cursor rules for a project.
     
     Args:
-        project_name (str): Name of the project
-        target_dir (Path): Target directory for the project
+        project_name (str): The name of the project.
+        target_dir (Path): The root directory of the project.
     """
-    print(f"Setting up Graphiti Cursor rules for project '{core.CYAN}{project_name}{core.NC}' in {core.CYAN}{target_dir}{core.NC}")
     repo_root = core.get_repo_root()
-    rules_source_dir = repo_root / "rules"
-    templates_source_dir = rules_source_dir / "templates"
+    print(f"Setting up Graphiti Cursor rules for project '{core.CYAN}{project_name}{core.NC}' in {core.CYAN}{target_dir}{core.NC}")
+
+    rules_source_dir = repo_root / DIR_PROJECT_ASSETS / DIR_RULES
+    # The destination directory within the project's .cursor structure
     cursor_rules_dir = target_dir / ".cursor" / "rules" / "graphiti"
 
     try:
         cursor_rules_dir.mkdir(parents=True, exist_ok=True)
         print(f"Created/verified rules directory: {core.CYAN}{cursor_rules_dir}{core.NC}")
 
-        core_rule_src = rules_source_dir / "graphiti-mcp-core-rules.md"
-        maint_rule_src = rules_source_dir / "graphiti-knowledge-graph-maintenance.md"
-        schema_template_src = templates_source_dir / "project_schema_template.md"
+        core_rule_src = rules_source_dir / FILE_CORE_RULE
+        maint_rule_src = rules_source_dir / FILE_MAINT_RULE
+        schema_template_src = rules_source_dir / DIR_TEMPLATES / FILE_SCHEMA_TEMPLATE
 
         core_rule_link = cursor_rules_dir / "graphiti-mcp-core-rules.mdc"
         maint_rule_link = cursor_rules_dir / "graphiti-knowledge-graph-maintenance.mdc"
@@ -425,7 +438,7 @@ def create_entity_set(entity_name: str, target_dir: Path):
         
     # Get path to template file from repo
     repo_root = core.get_repo_root()
-    example_template_path = repo_root / "entity_types" / "example" / "custom_entity_example.py"
+    example_template_path = repo_root / DIR_PROJECT_ASSETS / DIR_ENTITY_TEMPLATES / DIR_EXAMPLES / FILE_ENTITY_EXAMPLE
     
     try:
         # Create the project entity directory if it doesn't exist
