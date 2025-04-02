@@ -37,7 +37,8 @@ from constants import (
     # Configuration keys
     CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG,
     # Service name constants
-    SERVICE_NAME_PREFIX
+    SERVICE_NAME_PREFIX,
+    ENV_MCP_ENTITY_TYPES
 )
 from .core import LogLevel
 
@@ -319,9 +320,20 @@ def generate_compose_logic(
             # Add project-specific environment variables from mcp-config.yaml
             project_environment = server_conf.get(PROJECT_ENVIRONMENT_KEY, {})
             if isinstance(project_environment, dict):
+                # Check if MCP_ENTITY_TYPES is already defined in the project config
+                if ENV_MCP_ENTITY_TYPES not in project_environment:
+                    # If not defined, set it to empty string by default
+                    # This prevents accidental overrides from .env and triggers default behavior in entrypoint.sh
+                    env_vars[ENV_MCP_ENTITY_TYPES] = ""
+                # Merge project-specific environment variables AFTER setting the default
                 env_vars.update(project_environment)
             else:
                 print(f"Warning: Invalid '{PROJECT_ENVIRONMENT_KEY}' section for service '{service_name}' in '{project_config_path}'. Expected a dictionary.")
+            
+            # If MCP_ENTITY_TYPES was NOT in project_environment, but we haven't set it yet (e.g., project_environment was empty)
+            # ensure it's set to empty string.
+            if ENV_MCP_ENTITY_TYPES not in env_vars:
+                 env_vars[ENV_ENTITY_TYPES] = ""
 
             new_service[COMPOSE_ENVIRONMENT_KEY] = env_vars
 
