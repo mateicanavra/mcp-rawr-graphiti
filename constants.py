@@ -4,12 +4,27 @@ Shared constants for the Graphiti MCP server ecosystem.
 This module centralizes constants used across different components.
 """
 import logging
+from enum import Enum
 
 # --- Logging Constants ---
 # Constants related to Graphiti's logging mechanism
 DEFAULT_LOG_LEVEL_STR = "info"                 # Default logging level as a string
 DEFAULT_LOG_LEVEL = logging.INFO               # Default logging level as a Python logging constant
 ENV_GRAPHITI_LOG_LEVEL = "GRAPHITI_LOG_LEVEL"  # Environment variable name for configuring the logging level
+
+# ADDED LogLevel Enum here
+class LogLevel(str, Enum):
+    """
+    Log levels for Docker Compose and container execution.
+    """
+    debug = "debug"
+    info = "info"
+    warn = "warn"
+    error = "error"
+    fatal = "fatal"
+
+    def __str__(self) -> str:
+        return self.value
 
 # --- Directory Structure Constants ---
 # Standard directories used in Graphiti project structure

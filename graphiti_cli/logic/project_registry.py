@@ -7,7 +7,7 @@ which maps project names to their configuration details.
 from pathlib import Path
 from typing import Dict, Any
 
-from .yaml_utils import load_yaml_file, write_yaml_file
+from ..utils.yaml_utils import load_yaml_file, write_yaml_file
 from constants import (
     # Colors for output
     RED, YELLOW,

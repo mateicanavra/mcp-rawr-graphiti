@@ -9,7 +9,8 @@ from typing_extensions import Annotated  # Preferred for Typer >= 0.9
 
 # Import command functions and core utilities
 from . import commands
-from .core import LogLevel, get_repo_root
+from constants import LogLevel
+from .utils.config import get_repo_root
 
 # --- Application Constants ---
 APP_DESCRIPTION = "CLI for managing Graphiti MCP Server projects and Docker environment."
