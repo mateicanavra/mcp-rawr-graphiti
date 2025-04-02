@@ -28,67 +28,119 @@ This repository contains the Graphiti Model Context Protocol (MCP) Server and it
     ```
 *   **Git:** For cloning the repository.
 
-## Global CLI Installation (Recommended for General Use)
+## Installation and Setup Guide
 
-If you only intend to *use* the `graphiti` CLI (e.g., to manage projects or run Docker services) and not actively develop the CLI itself, installing it globally using `pipx` is the **strongly recommended** approach. `pipx` installs the package into an isolated environment, making the `graphiti` command available system-wide without interfering with other Python projects or your system Python installation.
+This guide covers how to install the `graphiti` CLI and set up the necessary environment. Choose the path that best suits your needs:
 
-**Why `pipx` is Preferred:**
+1.  **For Regular Users (Recommended):** Install the CLI globally using `pipx` for managing projects and running services.
+2.  **For Developers:** Set up a local development environment using `venv` if you plan to modify the CLI or server code.
 
-*   **Isolation:** Prevents dependency conflicts between the CLI and other projects.
-*   **Cleanliness:** Keeps your global Python environment tidy.
-*   **Safety:** Avoids potential issues caused by `sudo pip install` or modifying the system Python.
+---
+
+### 1. Standard Installation for Users (Using `pipx`)
+
+This is the **strongly recommended** method if you primarily want to *use* the `graphiti` CLI to initialize projects, manage entities, and run the Docker services. `pipx` installs the CLI into an isolated environment, making it available system-wide without interfering with other Python projects.
+
+**Why `pipx`?**
+
+*   **Isolation:** Prevents dependency conflicts.
+*   **Clean Global Environment:** Keeps your system Python tidy.
+*   **Safety:** Avoids issues with `sudo pip` or modifying system Python.
 
 **Prerequisites:**
 
-*   You still need **Docker & Docker Compose** installed to run the actual MCP server and database.
-*   Ensure you have `pipx` installed. If not:
+*   **Python:** 3.10+ (`python3 --version`).
+*   **Docker & Docker Compose:** Install from [Docker's official website](https://docs.docker.com/get-docker/).
+*   **`uv`:** Follow the instructions in the [Prerequisites](#prerequisites) section above.
+*   **`pipx`:** If you don't have it:
     ```bash
     # Install pipx (requires Python and pip)
     python3 -m pip install --user pipx
     # Add pipx to your PATH
     python3 -m pipx ensurepath
-    # Close and reopen your terminal or source your shell profile for PATH changes to take effect
+    # Close and reopen your terminal, or source your shell profile (e.g., ~/.zshrc, ~/.bashrc)
     ```
 
-**Installation Methods:**
+**Steps:**
 
-1.  **Installing from Local Source (Recommended for Now):**
-    To install the CLI globally directly from your local cloned repository:
+1.  **Clone This Repository:** You need the source code to build the CLI and access configuration files (like `base-compose.yaml`). Clone it to a stable location (e.g., `~/dev/rawr-mcp-graphiti`).
     ```bash
-    # Replace '/path/to/your/mcp-rawr-graphiti' with the actual absolute path
-    pipx install /path/to/your/mcp-rawr-graphiti
+    # Choose a suitable parent directory
+    cd ~/dev
+    git clone <repository-url> rawr-mcp-graphiti
+    cd rawr-mcp-graphiti
     ```
-    This builds the package from your local code and installs it via `pipx`. You can upgrade later if needed using `pipx upgrade rawr-mcp-graphiti`.
 
-2.  **Installing from PyPI (Once Published):**
-    Once the package `rawr-mcp-graphiti` is published on PyPI:
+2.  **Configure Environment Variables (Optional but Recommended):**
+    *   Copy the example `.env` file *within the cloned repository*:
+        ```bash
+        # Make sure you are in the cloned repo directory (e.g., ~/dev/rawr-mcp-graphiti)
+        cp .env.example .env
+        ```
+    *   **Edit `.env`:** Fill in required secrets and configurations (Neo4j credentials, OpenAI key, etc.). See the "Configure Environment" section under Developer Setup for details.
+
+3.  **Install CLI using `pipx`:** Navigate to the root of the cloned repository (`rawr-mcp-graphiti`) in your terminal and run:
     ```bash
-    pipx install rawr-mcp-graphiti
+    # Make sure you are in the cloned repo directory
+    pipx install . --include-deps
+    ```
+    *   This installs the `rawr-mcp-graphiti` package into an isolated `pipx` environment.
+    *   `--include-deps` ensures necessary runtime dependencies are included.
+
+4.  **First Run & Repo Path Configuration:**
+    *   The first time you run a `graphiti` command that needs to access the repository (like `graphiti check-setup` or `graphiti compose`), it might not find the repository automatically.
+    *   If it can't find it, the CLI will **prompt you interactively** to enter the absolute path to where you cloned the `rawr-mcp-graphiti` repository.
+    *   Enter the correct absolute path (e.g., `path/to/this/repo/`).
+    *   The CLI will validate the path and save it to a configuration file (`~/.config/graphiti/repo_path.txt`) for future use.
+    ```bash
+    # Example: Run check-setup from ANY directory after installation
+    graphiti check-setup
+    # If needed, it will prompt for the repo path here.
     ```
 
-**⚠️ Warning: Avoid Direct Global `pip` Installation ⚠️**
+5.  **Verify Installation:**
+    ```bash
+    # Check where pipx installed it
+    which graphiti
+    # Should output a path like: <user_home>/.local/bin/graphiti
 
-*   **Do NOT use `pip install .` or `pip install -e .` outside of a virtual environment (`.venv`)** for global access. This can pollute your global Python environment and lead to hard-to-debug dependency conflicts.
-*   **Do NOT use `sudo pip install`**. This modifies your system Python and can break system tools or other applications.
-*   `pipx` is specifically designed for safely installing Python CLI applications like this one.
+    # Verify the CLI runs and can find the repo (due to MCP_GRAPHITI_REPO_PATH)
+    # Run this from ANY directory (e.g., your home directory `cd ~`)
+    graphiti --help
+    graphiti check-setup # This should now work from anywhere without prompting (if configured)
+    ```
+    *   If `check-setup` fails, ensure the path saved in `~/.config/graphiti/repo_path.txt` is correct, or remove the file and run the command again to be re-prompted.
 
-**Usage Note & Potential PATH Conflicts:**
+6.  **Updating:** To update after pulling changes in the repository:
+    ```bash
+    # Navigate back to the repository root
+    cd /path/to/your/rawr-mcp-graphiti
+    # Pull the latest changes
+    git pull
+    # Upgrade the pipx installation
+    pipx upgrade rawr-mcp-graphiti
+    # If needed, force a reinstall from the updated source:
+    # pipx reinstall --force rawr-mcp-graphiti
+    ```
 
-Even when installed globally via `pipx`, the `graphiti` CLI commands (like `compose`, `up`, `check-setup`, `init`) usually need context about the project you're managing. Therefore, you will typically need to:
+**Summary for Users:** Clone the repo, copy/edit `.env`, install with `pipx`. Run a command like `graphiti check-setup`; if prompted, provide the absolute path to the cloned repo. The path will be saved automatically for future use.
 
-*   **Run `graphiti` commands from within the root directory** of the project you want to manage (the directory containing the `.env` file and where `docker-compose.yml` will be generated).
-*   OR (less common), set the `MCP_GRAPHITI_REPO_PATH` environment variable if required by specific workflows running outside a project context.
+---
 
-**Virtual Environment Precedence:** If you have activated a project-specific virtual environment (e.g., `source .venv/bin/activate` within the `mcp-rawr-graphiti` dev setup), the `graphiti` command found in *that* environment (`.venv/bin/graphiti`) will take precedence over the globally installed `pipx` version due to standard `PATH` order. This is expected behavior. To use the global `pipx` version, simply ensure no project virtual environment is active (`deactivate` if necessary).
+### 2. Local Development Installation (Using `venv`)
 
-## Installation and Setup (for Development)
+Follow these steps *only* if you intend to modify or contribute to the `graphiti` CLI or the MCP server codebase itself. This setup uses a Python virtual environment (`.venv`) and an editable installation, allowing code changes to be reflected immediately when running `graphiti` *within the activated environment*.
 
-Follow these steps if you intend to modify or contribute to the `graphiti` CLI or the MCP server codebase itself.
+**Prerequisites:**
+
+*   Same as for Standard Installation (Python, Docker, `uv`). `pipx` is not required for this method.
+
+**Steps:**
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <repository-url>
-    cd rawr-mcp-graphiti # Or your chosen directory name
+    git clone <repository-url> rawr-mcp-graphiti
+    cd rawr-mcp-graphiti
     ```
 
 2.  **Configure Environment:**
@@ -96,72 +148,96 @@ Follow these steps if you intend to modify or contribute to the `graphiti` CLI o
         ```bash
         cp .env.example .env
         ```
-    *   **Edit `.env`:** Fill in the required secrets and configurations:
-        *   `NEO4J_USER`, `NEO4J_PASSWORD`: Credentials for the Neo4j database.
-        *   `OPENAI_API_KEY`: Your OpenAI API key (required for entity extraction/LLM features).
-        *   `MODEL_NAME`: (Optional) Specify the OpenAI model (defaults to `gpt-4o`).
-        *   Adjust Neo4j ports/memory settings if needed.
-        *   `MCP_GRAPHITI_REPO_PATH`: (Optional) Set this environment variable **only** if you need to run the `graphiti` CLI from outside this repository's root directory OR if the CLI needs to reference external files (e.g., shared rules). **For the standard Docker-based workflow described below, this variable is typically NOT required.** If needed, set it to the absolute path of this repository's root directory:
-            ```bash
-            # Example for .bashrc or .zshrc
-            # export MCP_GRAPHITI_REPO_PATH=/path/to/your/mcp-rawr-graphiti
-            ```
+    *   **Edit `.env`:** Fill in required secrets and configurations:
+        *   `NEO4J_USER`, `NEO4J_PASSWORD`: Credentials for Neo4j.
+        *   `OPENAI_API_KEY`: OpenAI key.
+        *   `MODEL_NAME`: (Optional) OpenAI model.
+        *   Adjust other settings (ports, memory) if needed.
+        *   `MCP_GRAPHITI_REPO_PATH`: While the CLI run from within the active `venv` and repo root *might* find the root automatically, relying on the auto-prompt or the config file (`~/.config/graphiti/repo_path.txt`) generated on first use (even within the venv) is the recommended approach now. You can still set the environment variable as a manual override if needed.
 
 3.  **Set up Python Virtual Environment:**
-    *   Create a virtual environment using Python's built-in `venv` (using `python3` is recommended for clarity):
-        ```bash
-        python3 -m venv .venv
-        ```
-    *   Activate the virtual environment:
-        *   **macOS/Linux:** `source .venv/bin/activate`
-        *   **Windows:** `.venv\Scripts\activate`
-    *   You should see `(.venv)` prepended to your shell prompt.
+    ```bash
+    # Create the virtual environment
+    python3 -m venv .venv
+    # Activate it (example for macOS/Linux)
+    source .venv/bin/activate
+    # You should see (.venv) in your prompt
+    ```
 
 4.  **Install Dependencies:**
-    *   Use `uv` to install dependencies based on the lock file (`uv.lock`). This file ensures reproducible builds.
-    *   *(Note: If `uv.lock` is missing, you'll need to generate it first. See Development Notes below).*
+    *   Use `uv` to install dependencies from the lock file into the active `venv`.
     ```bash
+    # Make sure (.venv) is active
     uv pip sync uv.lock
     ```
 
-5.  **Install the CLI:**
-    *   Install the `rawr-mcp-graphiti` package itself in editable mode. This makes the `graphiti` command available within your activated virtual environment.
-        ```bash
-        uv pip install -e .
-        ```
-    *   Verify the CLI installation:
-        ```bash
-        graphiti --help
-        ```
+5.  **Install CLI in Editable Mode:**
+    *   Install the package itself in *editable* mode (`-e`). This links the `graphiti` command within the `venv` directly to your source code.
+    ```bash
+    # Make sure (.venv) is active
+    pip install -e .
+    # ('uv pip install -e .' should also work)
+    ```
+
+6.  **Verify Installation:**
+    ```bash
+    # Verify it's using the venv path
+    which graphiti
+    # Should output path inside your .venv/bin/
+
+    # Verify the CLI runs (ensure venv is active)
+    graphiti --help
+    graphiti check-setup # Run from repo root
+    ```
+
+**Summary for Developers:** Clone, copy/edit `.env`, set up `.venv`, activate it, `uv pip sync`, `pip install -e .`. Run commands from within the repo root with the `venv` active. The repo path will be auto-detected or prompted for and saved on first use.
+
+---
+
+## Understanding Which `graphiti` You're Using
+
+*   **Global (`pipx`)**: If no `(.venv)` is in your prompt, you're likely using the `pipx` version. It relies on the path stored in `~/.config/graphiti/repo_path.txt` (or prompts on first use). Updates require `pipx upgrade`.
+*   **Local (`venv`)**: If `(.venv)` is in your prompt (after `source .venv/bin/activate`), you're using the *editable* development version. Code changes are live. Ideally, run from the repo root. Deactivate with `deactivate`.
+
+---
 
 ## Verifying Your Setup
 
-Before attempting to run the Docker services, it's recommended to verify your local environment setup using the `check-setup` command:
+Regardless of the installation method, use `check-setup`.
+
+*   **If using `pipx`:** Run `graphiti check-setup` from *any* directory. It relies on the configured path in `~/.config/graphiti/repo_path.txt` (or prompts).
+*   **If using `venv`:** Activate the `venv` (`source .venv/bin/activate`) and run `graphiti check-setup` from the *repository root directory*.
 
 ```bash
-# Make sure your virtual environment is active
+# Example for pipx user (run from anywhere):
 graphiti check-setup
+
+# Example for developer (activate venv first, run from repo root):
+# source .venv/bin/activate
+# graphiti check-setup
 ```
 
-This command will perform several checks:
+This command checks:
 
-*   **Repository Root:** Ensures the CLI can correctly identify the project's root directory.
-*   **`.env` File:** Checks if the `.env` file exists at the root and if essential variables (`NEO4J_USER`, `NEO4J_PASSWORD`, `OPENAI_API_KEY`) are loaded.
+*   **Repository Root:** Finds the root (via config file `~/.config/graphiti/repo_path.txt`, env var override, or relative paths for venv).
+*   **`.env` File:** Checks if the `.env` file exists *at the identified repository root* and if essential variables are loaded.
 *   **Docker Status:** Verifies that the `docker` command is available in your `PATH` and that the Docker daemon appears to be running and responsive.
 
-If all checks pass, you'll see a success message. If any checks fail, it will provide specific error messages and tips to help you resolve the issues before proceeding.
+If all checks pass, you're ready to proceed.
 
 ## Running the Services (Docker)
 
-The MCP server and its Neo4j database run as Docker containers managed by Docker Compose.
+The MCP server and its Neo4j database run as Docker containers managed by Docker Compose. **These commands (`compose`, `up`, `down`, etc.) must be run from the root of the `rawr-mcp-graphiti` repository.** Ensure your CLI (either `pipx` or `venv`) is set up correctly and can find the repository root.
 
 1.  **Generate Docker Compose Configuration:**
-    *   The `graphiti` CLI generates the final `docker-compose.yml` from `base-compose.yaml` and project definitions in `mcp-projects.yaml`.
-    *   Run the compose command:
+    *   The `graphiti` CLI generates the final `docker-compose.yml` from `base-compose.yaml` (in the repo) and project definitions in `mcp-projects.yaml` (also in the repo).
+    *   Navigate to the repository root and run:
         ```bash
+        # cd /path/to/your/rawr-mcp-graphiti
         graphiti compose
         ```
     *   This command reads `mcp-projects.yaml`. If you initialize new projects using `graphiti init`, this file will be updated automatically with *absolute paths* to your projects. Ensure these paths are correct for your system, as they are used for Docker volume mounts.
+    *   It also updates the `.cursor/mcp.json` file in each enabled project's root directory.
 
 2.  **Start Services:**
     *   Build and start the containers (Neo4j, root MCP server, and any project-specific servers defined in `mcp-projects.yaml`):
@@ -172,8 +248,8 @@ The MCP server and its Neo4j database run as Docker containers managed by Docker
         ```bash
         graphiti up -d
         ```
-    *   The first time you run this, Docker will build the `graphiti-mcp-server` image, which may take a few minutes. Subsequent starts will be faster.
-    *   The root MCP server will typically be available at `http://localhost:8000` (or the port specified by `MCP_ROOT_HOST_PORT` in `.env`). Project-specific servers will be available on ports assigned sequentially starting from 8001 (or as configured in their respective `mcp-config.yaml` files).
+    *   The first time you run this, Docker may build the `graphiti-mcp-server` image. Subsequent starts are faster.
+    *   The root MCP server will typically be available at `http://localhost:8000` (or the port specified by `MCP_ROOT_HOST_PORT` in `.env`). Project-specific servers will be available on ports assigned sequentially starting from 8001 (or as configured in their respective `mcp-config.yaml` files). Check the output of `graphiti compose` for port assignments.
     *   You can usually access the Neo4j Browser UI in your web browser at `http://localhost:7474` to interact with the database directly (use the credentials from your `.env` file).
 
 3.  **Check Status:**
@@ -187,38 +263,59 @@ The MCP server and its Neo4j database run as Docker containers managed by Docker
         ```
 
 5.  **Other Docker Commands:**
-    *   Restart services: `graphiti restart [-d]`
+    *   Restart services: `graphiti restart [-d]` (Runs `down` then `up`)
     *   Reload (restart) a specific service: `graphiti reload <service_name>` (e.g., `graphiti reload graphiti-mcp-root`)
 
 ## Using the `graphiti` CLI
 
-The `graphiti` CLI helps manage projects and the Docker environment. Run `graphiti --help` to see all commands. Key commands include:
+The `graphiti` CLI helps manage projects and the Docker environment. Run `graphiti --help` to see all commands.
 
-*   `graphiti init <project_name> [target_dir]`: Initializes a new project structure (including `ai/graph/mcp-config.yaml`, `ai/graph/entities/`, and Cursor rules). Updates `mcp-projects.yaml`.
-*   `graphiti entity <set_name> [target_dir]`: Creates a new entity definition file template within an existing project's `entities` directory.
-*   `graphiti rules <project_name> [target_dir]`: Sets up or updates symlinks for Cursor AI rules for a project.
-*   `graphiti compose`: Generates/updates `docker-compose.yml`.
-*   `graphiti up|down|restart|reload`: Manages the Docker Compose stack.
+**Key Command Locations:**
+
+*   **Run from Repository Root (`rawr-mcp-graphiti/`):**
+    *   `graphiti compose`: Generates `docker-compose.yml`.
+    *   `graphiti up|down|restart|reload|logs`: Manages Docker services.
+    *   `graphiti check-setup`: Verifies setup (especially useful here for venv users).
+*   **Run from Project Parent Directory:**
+    *   `graphiti init <project_name> [target_dir]`: Initializes a new project structure in the specified directory.
+*   **Run from Existing Project Root Directory:**
+    *   `graphiti entity <set_name>`: Creates a new entity definition template within this project's `entities` directory.
+    *   `graphiti rules <project_name>`: Sets up/updates Cursor rule symlinks for this project.
+
+**Example Workflow:**
+
+1.  Install CLI (`pipx` recommended for users).
+2.  `cd /path/to/your/rawr-mcp-graphiti`
+3.  `graphiti compose`
+4.  `graphiti up -d` (Start services)
+5.  `cd /path/to/where/you/keep/projects`
+6.  `graphiti init my-new-ai-project`
+7.  `cd my-new-ai-project`
+path/to/your/project/ai/graph/entities/`)
+9.  Edit `user-profiles.yaml`...
+10. The `my-new-ai-project` is now registered in `mcp-projects.yaml` (in the repo root). If you re-run `graphiti compose` and `graphiti up -d` (from the repo root), a dedicated MCP server instance for this project might be started (depending on the base config).
 
 ## Development Notes
 
 *   **Generating `uv.lock`:** If the `uv.lock` file is missing or out of date, you can regenerate it from `pyproject.toml` using:
     ```bash
+    # Activate venv
     uv pip compile pyproject.toml --output-file uv.lock
     # Or potentially just: uv pip lock
     # Commit the updated uv.lock file to the repository.
     ```
 *   **Local `graphiti-core` Development:** If you are developing `graphiti-core` locally alongside this server:
     1.  Build the `graphiti-core` wheel file (e.g., `python3 -m build`) in the `graphiti-core` repository. This creates files in its `dist/` directory.
-    2.  Ensure the `dist/` directory containing the `.whl` file exists at the *root* of the *main Graphiti repository* (one level above `mcp_server`). The path might need adjustment depending on your exact structure post-extraction.
-    3.  In `mcp_server/pyproject.toml`, ensure the line `graphiti-core @ file:///dist/...` is uncommented and points to the correct wheel file name. Comment out the line starting with `graphiti-core>=...`.
-    4.  When you run `graphiti up`, the build process will copy the local wheel from the `dist/` directory and install it inside the Docker image.
-*   **Running Server without Docker:** You can run the server directly for debugging (though Docker is recommended for full setup):
+    2.  Ensure the `dist/` directory containing the `.whl` file exists at the *root* of the *main Graphiti repository* (one level above `rawr-mcp-graphiti`). The path might need adjustment depending on your exact structure post-extraction.
+    3.  In `rawr-mcp-graphiti/pyproject.toml`, ensure the line `graphiti-core = {path = "../dist/graphiti_core-...-py3-none-any.whl"}` (adjust path/filename) is uncommented. Comment out the versioned line `graphiti-core>=...`.
+    4.  Re-run `uv pip sync uv.lock` or `pip install -e .` in your venv.
+    5.  The Docker build process might also need adjustment if it doesn't automatically pick up the local wheel installation from the venv. Consider adding a `COPY ../dist /dist` and `RUN uv pip install /dist/*.whl` in the Dockerfile's builder stage if needed.
+*   **Running Server without Docker:** You can run the server directly for debugging:
     ```bash
     # Ensure .env is loaded or variables are exported
     # Activate venv: source .venv/bin/activate
     # Example:
-    uv run python3 graphiti_mcp_server.py --transport sse --group-id my-test-group --log-level debug
+    python3 graphiti_mcp_server.py --transport sse --group-id my-test-group --log-level debug
     # Add other flags like --use-custom-entities, --entity-type-dir as needed
     ```
 
@@ -231,15 +328,3 @@ The environment variable `NEO4J_DESTROY_ENTIRE_GRAPH` in your `.env` file is **e
 *   **This action cannot be undone.**
 *   Only set this to `true` if you are absolutely certain you want to wipe the entire database.
 *   **Immediately** comment it out or set it back to `false` after use to prevent accidental data loss on subsequent restarts.
-
-## Alternative Installation/Distribution Methods
-
-**(This section is less relevant if using the recommended `pipx` method above for general use)**
-
-While the **development setup** described above works well for contributors, simpler methods could be considered for distributing the CLI or the server to end-users:
-
-1.  **Publish CLI to PyPI:** Package `graphiti_cli` and its dependencies and publish it to the Python Package Index (PyPI). Users could then install it globally or in a virtual environment using `pip install graphiti-mcp-cli` (or a chosen package name). **This is the prerequisite for the recommended `pipx` installation method described above.**
-2.  **Containerized CLI:** Create a Docker image specifically for running the CLI. Users would run `docker run -it --rm -v $(pwd):/workspace -v /var/run/docker.sock:/var/run/docker.sock <cli-image-name> graphiti ...` commands. This encapsulates Python dependencies but adds Docker complexity to CLI usage.
-3.  **All-in-One Docker Image:** A more complex approach could involve a single Docker image entrypoint that can either start the server *or* execute CLI commands.
-
-The **development setup** (local install via `uv pip install -e .`) combined with Docker Compose (`graphiti up`) provides a good balance for developers actively working with the codebase. Publishing to PyPI and using `pipx` is the most user-friendly approach for distributing the CLI widely for general use.

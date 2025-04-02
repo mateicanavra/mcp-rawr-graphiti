@@ -21,6 +21,7 @@ wheels/
 *.egg
 MANIFEST
 
+
 # Environments
 .env
 .venv
@@ -46,4 +47,14 @@ logs/
 # Local development
 .DS_Store
 .coverage
-htmlcov/ 
+htmlcov/
+
+# Repomix
+rawr-mcp-graphiti-repo.md
+
+# Config
+mcp-projects.yaml
+
+# Cursor
+.cursor/**
+.cursor/*
