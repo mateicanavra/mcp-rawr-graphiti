@@ -307,227 +307,257 @@ async def process_episode_queue(group_id: str):
 @mcp.tool()
 async def add_episode(
     name: str,
-    episode_body: Union[str, Dict[str, Any], List[Any]],
+    # MODIFIED: Always expect a string now
+    episode_body: str,
     group_id: Optional[str] = None,
-    source: str = 'text',
+    # MODIFIED: Replaced 'source' with 'format'
+    format: str = 'text', # 'text', 'json', or 'message'
     source_description: str = '',
     uuid: Optional[str] = None,
     entity_type_subset: Optional[list[str]] = None,
 ) -> Union[SuccessResponse, ErrorResponse]:
-    """Add an episode to the Graphiti knowledge graph. This is the primary way to add information to the graph.
+    """(Revised Input) Add an episode to the Graphiti knowledge graph.
 
-    This function returns immediately and processes the episode addition in the background.
-    Episodes for the same group_id are processed sequentially to avoid race conditions.
+    Processes the episode addition asynchronously in the background.
+    Episodes for the same group_id are processed sequentially.
 
     Args:
         name (str): Name of the episode
-        episode_body (Union[str, Dict[str, Any], List[Any]]): The content of the episode.
-                           When source='json', this can be either:
-                           - A Python dictionary or list that will be automatically serialized, or
-                           - A properly escaped JSON string.
-                           The JSON data will be automatically processed to extract entities and relationships.
-                           For other source types, this must be a string.
-        group_id (str, optional): A unique ID for this graph. If not provided, uses the default group_id from CLI
-                                 or a generated one.
-        source (str, optional): Source type, must be one of:
-                               - 'text': For plain text content (default)
-                               - 'json': For structured data
-                               - 'message': For conversation-style content
-        source_description (str, optional): Description of the source
-        uuid (str, optional): Optional UUID for the episode
-        entity_type_subset (list[str], optional): Optional list of entity type names to use for this episode.
-                                                If not provided, uses all entity types if enabled.
-
-    Examples:
-        # Adding plain text content
-        add_episode(
-            name="Company News",
-            episode_body="Acme Corp announced a new product line today.",
-            source="text",
-            source_description="news article",
-            group_id="some_arbitrary_string"
-        )
-
-        # Adding structured JSON data as a Python dictionary (preferred method)
-        add_episode(
-            name="Customer Profile",
-            episode_body={"company": {"name": "Acme Technologies"}, "products": [{"id": "P001", "name": "CloudSync"}, {"id": "P002", "name": "DataMiner"}]},
-            source="json",
-            source_description="CRM data"
-        )
-        
-        # Adding structured JSON data as a pre-serialized string (alternative method)
-        add_episode(
-            name="Customer Profile",
-            episode_body="{\\\"company\\\": {\\\"name\\\": \\\"Acme Technologies\\\"}, \\\"products\\\": [{\\\"id\\\": \\\"P001\\\", \\\"name\\\": \\\"CloudSync\\\"}, {\\\"id\\\": \\\"P002\\\", \\\"name\\\": \\\"DataMiner\\\"}]}",
-            source="json",
-            source_description="CRM data"
-        )
-
-        # Adding message-style content
-        add_episode(
-            name="Customer Conversation",
-            episode_body="user: What's your return policy?\nassistant: You can return items within 30 days.",
-            source="message",
-            source_description="chat transcript",
-            group_id="some_arbitrary_string"
-        )
-
-        # Using a specific subset of entity types
-        add_episode(
-            name="Project Requirements",
-            episode_body="We need to implement user authentication with SSO.",
-            entity_type_subset=["Requirement"],
-            source="text",
-            source_description="meeting notes"
-        )
-
-    Notes:
-        When using source='json':
-        - For convenience, you can provide a Python dictionary or list directly (recommended method)
-        - Alternatively, you can provide a properly escaped JSON string
-        - The JSON will be automatically processed to extract entities and relationships
-        - Complex nested structures are supported (arrays, nested objects, mixed data types), but keep nesting to a minimum
-        - Entities will be created from appropriate JSON properties
-        - Relationships between entities will be established based on the JSON structure
-        
-        For source='text' and source='message', only string inputs are accepted.
+        episode_body (str): The content of the episode, always provided as a string.
+                           If format='json', this string must be valid JSON.
+        group_id (str, optional): A unique ID for this graph. Defaults to config.
+        format (str, optional): How to interpret episode_body ('text', 'json', 'message'). Defaults to 'text'.
+        source_description (str, optional): Description of the source.
+        uuid (str, optional): Optional UUID for the episode.
+        entity_type_subset (list[str], optional): Optional list of entity type names to use.
     """
+    # ---> Logging <---
+    logger.debug(f"Entered add_episode for '{name}' with format '{format}'")
     global graphiti_client, episode_queues, queue_workers
 
     if graphiti_client is None:
         return {'error': 'Graphiti client not initialized'}
 
     try:
-        # Map string source to EpisodeType enum
+        # Map string format to EpisodeType enum - Default to text
         source_type = EpisodeType.text
-        if source.lower() == 'message':
+        if format.lower() == 'message':
             source_type = EpisodeType.message
-        elif source.lower() == 'json':
+        elif format.lower() == 'json':
             source_type = EpisodeType.json
+        # ---> Logging <---
+        logger.debug(f"Determined source_type: {source_type} based on format: {format}")
 
         # Use the provided group_id or fall back to the default from config
         effective_group_id = group_id if group_id is not None else config.group_id
-
-        # Cast group_id to str to satisfy type checker
-        # The Graphiti client expects a str for group_id, not Optional[str]
         group_id_str = str(effective_group_id) if effective_group_id is not None else ''
+        logger.debug(f"Effective group_id: {group_id_str}")
 
-        # We've already checked that graphiti_client is not None above
-        # This assert statement helps type checkers understand that graphiti_client is defined
         assert graphiti_client is not None, 'graphiti_client should not be None here'
-
-        # Use cast to help the type checker understand that graphiti_client is not None
         client = cast(Graphiti, graphiti_client)
-        
-        # Input validation and preparation
-        episode_body_str = ""
-        if source_type == EpisodeType.json:
-            # For JSON source, we accept both dictionaries/lists and pre-serialized strings
-            if isinstance(episode_body, (dict, list)):
-                try:
-                    episode_body_str = json.dumps(episode_body)
-                    logger.debug(f"Successfully serialized dictionary/list to JSON string")
-                except TypeError as e:
-                    error_msg = f"Failed to serialize episode_body to JSON: {str(e)}"
-                    logger.error(error_msg)
-                    return {'error': error_msg}
-            elif isinstance(episode_body, str):
-                # Optionally validate the JSON string
-                try:
-                    json.loads(episode_body)  # Just for validation
-                    episode_body_str = episode_body
-                    logger.debug(f"Verified episode_body is a valid JSON string")
-                except json.JSONDecodeError as e:
-                    error_msg = f"Invalid JSON string provided for episode_body: {str(e)}"
-                    logger.error(error_msg)
-                    return {'error': error_msg}
-            else:
-                error_msg = f"Invalid episode_body type for source='json': {type(episode_body)}. Expected dict, list, or string."
-                logger.error(error_msg)
-                return {'error': error_msg}
-        else:
-            # For text and message sources, we only accept strings
-            if isinstance(episode_body, str):
-                episode_body_str = episode_body
-            else:
-                error_msg = f"Invalid episode_body type for source='{source}': {type(episode_body)}. Expected string."
-                logger.error(error_msg)
-                return {'error': error_msg}
 
-        # Define the episode processing function
+        # Directly use the input string - Parsing happens in the background task
+        episode_body_str = episode_body
+        logger.debug(f"Using provided episode_body string (length: {len(episode_body_str)})")
+
+        # Define the episode processing function (captures current variables)
         async def process_episode():
+            # ---> Logging <---
+            logger.info(f"[BG Task - {group_id_str}] Starting processing for episode '{name}' (format: {format})")
+            processed_body: Union[str, Dict, List] = episode_body_str # Default to string
+            
             try:
-                logger.info(f"Processing queued episode '{name}' for group_id: {group_id_str}")
+                # Attempt JSON parsing ONLY if format is json, INSIDE the background task
+                if source_type == EpisodeType.json:
+                    try:
+                        logger.debug(f"[BG Task - {group_id_str}] Attempting to parse episode_body as JSON")
+                        processed_body = json.loads(episode_body_str)
+                        logger.debug(f"[BG Task - {group_id_str}] Successfully parsed JSON.")
+                        # NOTE: We pass the original string to client.add_episode,
+                        # as the core library currently expects a string even for JSON source.
+                        # If the core library is updated to accept dict/list, change `episode_body=episode_body_str` below.
+                    except json.JSONDecodeError as json_err:
+                        logger.error(f"[BG Task - {group_id_str}] Invalid JSON in episode_body for episode '{name}': {json_err}. Processing as text.")
+                        # Fallback: Process as text if JSON parsing fails? Or raise error?
+                        # For now, let's proceed but log the error. The core library might handle it gracefully or fail.
+                        # Alternatively, uncomment the next line to stop processing on bad JSON:
+                        # raise ValueError(f"Invalid JSON provided for format='json': {json_err}") from json_err
                 
+                # (Entity type determination logic remains the same as previous version)
                 # Import here to ensure we get the most up-to-date entity registry
                 from entity_types import get_entity_types, get_entity_type_subset
                 
-                # Determine which entity types to use based on configuration and parameters
                 logger.info(f"Configuration settings - use_custom_entities: {config.use_custom_entities}, "
                            f"entity_type_subset param: {entity_type_subset}, "
                            f"config.entity_type_subset: {config.entity_type_subset}")
                 
                 if not config.use_custom_entities:
-                    # If custom entities are disabled, use empty dict
                     entity_types_to_use = {}
                     logger.info("Custom entities disabled, using empty entity type dictionary")
                 elif entity_type_subset:
-                    # If a subset is specified in function call, it takes highest precedence
                     entity_types_to_use = get_entity_type_subset(entity_type_subset)
                     logger.info(f"Using function parameter entity subset: {entity_type_subset}")
                 elif config.entity_type_subset:
-                    # If subset is specified via command line, use that
                     entity_types_to_use = get_entity_type_subset(config.entity_type_subset)
                     logger.info(f"Using command-line entity subset: {config.entity_type_subset}")
                 else:
-                    # Otherwise use all registered entity types - get fresh reference here
                     entity_types_to_use = get_entity_types()
                     logger.info(f"Using all registered entity types: {list(entity_types_to_use.keys())}")
                 
                 logger.info(f"Final entity types being used: {list(entity_types_to_use.keys())}")
 
+                # Call the core library function
+                # IMPORTANT: Pass episode_body_str for now, even if format='json',
+                # as graphiti-core expects a string.
                 await client.add_episode(
                     name=name,
                     episode_body=episode_body_str,
                     source=source_type,
                     source_description=source_description,
-                    group_id=group_id_str,  # Using the string version of group_id
+                    group_id=group_id_str,
                     uuid=uuid,
                     reference_time=datetime.now(timezone.utc),
                     entity_types=entity_types_to_use,
                 )
-                logger.info(f"Episode '{name}' added successfully")
+                logger.info(f"Episode '{name}' added successfully to graph")
 
                 logger.info(f"Building communities after episode '{name}'")
                 await client.build_communities()
 
-                logger.info(f"Episode '{name}' processed successfully")
+                logger.info(f"[BG Task - {group_id_str}] Successfully processed episode '{name}'")
             except Exception as e:
                 error_msg = str(e)
                 logger.error(
-                    f"Error processing episode '{name}' for group_id {group_id_str}: {error_msg}"
+                    f"[BG Task - {group_id_str}] Error processing episode '{name}': {error_msg}"
                 )
+                # Optionally, you could implement a way to notify the client of background errors
 
-        # Initialize queue for this group_id if it doesn't exist
+        # --- ASYNC QUEUEING LOGIC (Restored) ---
+        logger.debug(f"Checking/Initializing queue for group_id: {group_id_str}")
         if group_id_str not in episode_queues:
             episode_queues[group_id_str] = asyncio.Queue()
 
-        # Add the episode processing function to the queue
+        logger.debug(f"Adding process_episode to queue for group_id: {group_id_str}")
         await episode_queues[group_id_str].put(process_episode)
 
-        # Start a worker for this queue if one isn't already running
+        logger.debug(f"Ensuring worker task exists for group_id: {group_id_str}")
         if not queue_workers.get(group_id_str, False):
             asyncio.create_task(process_episode_queue(group_id_str))
 
-        # Return immediately with a success message
+        logger.debug(f"Returning immediate 'queued' response for episode '{name}'")
         return {
             'message': f"Episode '{name}' queued for processing (position: {episode_queues[group_id_str].qsize()})"
         }
+        # --- END ASYNC QUEUEING LOGIC ---
+
+    except Exception as e:
+        # This catches errors during the *initial* part (before queueing)
+        error_msg = str(e)
+        logger.error(f'Error queuing episode task for "{name}": {error_msg}')
+        return {'error': f'Error queuing episode task: {error_msg}'}
+
+
+@mcp.tool()
+async def add_episode_test(
+    name: str,
+    episode_body: str,
+    group_id: Optional[str] = None,
+    source_description: str = '',
+    uuid: Optional[str] = None,
+) -> Union[SuccessResponse, ErrorResponse]:
+    """(Simplified for Testing) Add an episode to the Graphiti knowledge graph.
+
+    This version processes the episode synchronously for debugging.
+
+    Args:
+        name (str): Name of the episode
+        episode_body (str): The text content of the episode.
+        group_id (str, optional): A unique ID for this graph. If not provided, uses the default group_id from CLI
+                                 or a generated one.
+        source_description (str, optional): Description of the source
+        uuid (str, optional): Optional UUID for the episode
+    """
+    logger.debug(f"Entered add_episode_test (simplified) for '{name}'")
+    global graphiti_client, episode_queues, queue_workers
+
+    if graphiti_client is None:
+        return {'error': 'Graphiti client not initialized'}
+
+    try:
+        # Map string source to EpisodeType enum - Simplified: Assume text
+        source_type = EpisodeType.text
+        logger.debug(f"Using fixed source_type: {source_type}")
+
+        # Use the provided group_id or fall back to the default from config
+        effective_group_id = group_id if group_id is not None else config.group_id
+
+        # Cast group_id to str to satisfy type checker
+        group_id_str = str(effective_group_id) if effective_group_id is not None else ''
+        logger.debug(f"Effective group_id: {group_id_str}")
+
+        assert graphiti_client is not None, 'graphiti_client should not be None here'
+        client = cast(Graphiti, graphiti_client)
+
+        # Simplified: Directly use the string input
+        episode_body_str = episode_body
+        logger.debug(f"Using provided episode_body string (length: {len(episode_body_str)})")
+
+        # Define the episode processing function
+        async def process_episode():
+            logger.info(f"[Sync Task - {group_id_str}] Starting processing for episode '{name}'") # Changed log prefix
+            try:
+                # Import here to ensure we get the most up-to-date entity registry
+                from entity_types import get_entity_types # Keep get_entity_types import
+
+                # SIMPLIFIED: Determine entity types based only on config flag
+                if config.use_custom_entities:
+                    entity_types_to_use = get_entity_types() # Use all registered types
+                    logger.info(f"Using ALL registered entity types ({len(entity_types_to_use)} types)")
+                else:
+                    entity_types_to_use = {} # Use no custom types
+                    logger.info("Custom entities disabled by config, using empty entity type dictionary")
+                
+                logger.info(f"Final entity types being used: {list(entity_types_to_use.keys())}")
+
+                await client.add_episode(
+                    name=name,
+                    episode_body=episode_body_str, # Use the validated string
+                    source=source_type, # Use simplified source type
+                    source_description=source_description,
+                    group_id=group_id_str,
+                    uuid=uuid,
+                    reference_time=datetime.now(timezone.utc),
+                    entity_types=entity_types_to_use, # Pass the simplified set
+                )
+                logger.info(f"Episode '{name}' added successfully to graph")
+
+                logger.info(f"Building communities after episode '{name}'")
+                await client.build_communities()
+
+                logger.info(f"[Sync Task - {group_id_str}] Successfully processed episode '{name}'") # Changed log prefix
+            except Exception as e:
+                error_msg = str(e)
+                logger.error(
+                    f"[Sync Task - {group_id_str}] Error processing episode '{name}': {error_msg}" # Changed log prefix
+                )
+                # Re-raise the exception so the main function catches it for the sync case
+                raise
+
+        # --- TEMPORARY SYNC EXECUTION START ---
+        # Execute synchronously for debugging.
+        logger.debug(f"Executing process_episode synchronously for episode '{name}'")
+        await process_episode() # Direct await
+        logger.debug(f"Synchronous process_episode finished for episode '{name}'")
+        # Return a success message indicating synchronous completion
+        return {'message': f"Episode '{name}' processed synchronously."}
+        # --- TEMPORARY SYNC EXECUTION END ---
+
     except Exception as e:
         error_msg = str(e)
-        logger.error(f'Error queuing episode task: {error_msg}')
-        return {'error': f'Error queuing episode task: {error_msg}'}
+        # Log the error originating from the synchronous call or initial setup
+        logger.error(f'Error in add_episode_test tool function (sync execution): {error_msg}')
+        # Return an error response to the client
+        return {'error': f'Error processing episode synchronously: {error_msg}'}
 
 
 @mcp.tool()

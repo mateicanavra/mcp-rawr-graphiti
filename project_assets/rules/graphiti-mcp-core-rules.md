@@ -72,6 +72,13 @@ For effective project work, be aware of the three key types of Graphiti rules:
 - **Understand parameter behavior:** Be aware of specific tool parameter nuances:
   - For `mcp_graphiti_core_add_episode`, avoid explicitly providing `group_id` as a string—let the system use defaults from command line configuration or generate one automatically.
   - Use episode source types appropriately: 'text' for plain content, 'json' for structured data that should automatically extract entities and relationships, and 'message' for conversation-style content.
+- **Leverage JSON for structured data:** When adding structured information with `add_episode`:
+  - **Preferred method:** Pass a Python dictionary or list directly: `episode_body={"company": {"name": "Acme Corp"}, "products": [{"id": "P001", "name": "CloudSync"}]}`
+  - **Alternative method:** Use a properly escaped JSON string if necessary
+  - Structure your JSON with logical entity hierarchies to enable automatic entity and relationship extraction
+  - Keep nesting to a reasonable depth for optimal processing
+  - Properties in your JSON structure will be converted to entities, with relationships established based on the structure
+  - Include clear identifiers and descriptive properties to improve entity recognition
 - **Leverage advanced search capabilities:** When using search tools:
   - Use hybrid search combining vector similarity, full-text search, and graph traversal.
   - Set appropriate `max_nodes` and `max_facts` to control result volume.
