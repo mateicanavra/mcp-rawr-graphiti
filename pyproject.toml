@@ -1,6 +1,6 @@
 [project]
 name = "rawr-mcp-graphiti"
-version = "0.1.2"
+version = "0.1.10"
 description = "RAWR CLI for Graphiti MCP Server network"
 readme = "README.md"
 requires-python = ">=3.10"
