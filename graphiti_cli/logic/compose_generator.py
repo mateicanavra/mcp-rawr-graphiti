@@ -13,6 +13,7 @@ from typing import Optional, List, Dict, Any, Union
 from ..utils.yaml_utils import load_yaml_file, write_yaml_file
 from ..utils.config import get_repo_root
 from ..utils.cursor_utils import update_cursor_mcp_json
+from ruamel.yaml.comments import CommentedMap
 from constants import (
     # Colors for output
     RED, GREEN, YELLOW, CYAN, NC,
@@ -149,16 +150,15 @@ def generate_compose_logic(
                     print(f"{YELLOW}Warning: Could not update Cursor MCP config due to invalid port: {e}{NC}")
 
             # --- Build Service Definition using CommentedMap ---
-            new_service = {}  # We'll convert this back to CommentedMap in yaml_utils
+            new_service = CommentedMap()  # Use CommentedMap instead of regular dict
             # Add the merge key first using the anchor object
-            # new_service.add_yaml_merge([(0, custom_base_anchor_obj)])  # Merge base config
-            # This merge handle will be added by yaml_utils
+            new_service.add_yaml_merge([(0, custom_base_anchor_obj)])  # Merge base config
 
             new_service[COMPOSE_CONTAINER_NAME_KEY] = container_name
             new_service[COMPOSE_PORTS_KEY] = [port_mapping]  # Ports must be a list
 
             # --- Environment Variables ---
-            env_vars = {}  # Will be converted to CommentedMap in yaml_utils
+            env_vars = CommentedMap()  # Use CommentedMap instead of regular dict
             mcp_group_id = server_conf.get(PROJECT_GROUP_ID_KEY, project_name)  # Default group_id to project_name
             env_vars[ENV_MCP_GROUP_ID] = mcp_group_id
             # Set the default for custom entity usage FIRST
