@@ -12,6 +12,8 @@ import dotenv # Import dotenv for loading .env file
 
 from . import core
 from . import yaml_utils
+from . import project_registry
+from . import compose_generator
 from constants import (
     # Configuration constants
     CONFIG_FILENAME, ENTITY_FILE_EXTENSION,
@@ -109,7 +111,7 @@ def docker_compose_generate():
     print(f"{core.BOLD}Generating docker-compose.yml from templates...{core.NC}")
     repo_root = core.get_repo_root()
     try:
-        yaml_utils.generate_compose_logic(repo_root)  # Generate with default level
+        compose_generator.generate_compose_logic(repo_root)  # Generate with default level
         # Success message printed within generate_compose_logic
     except Exception as e:
         print(f"{core.RED}Error: Failed to generate docker-compose.yml file: {e}{core.NC}")
@@ -267,7 +269,7 @@ def init_project(project_name: str, target_dir: Path):
     print(f"Updating central project registry: {core.CYAN}{registry_path}{core.NC}")
     try:
         # Ensure paths are absolute before passing
-        success = yaml_utils.update_registry_logic(
+        success = project_registry.update_registry_logic(
             registry_file=registry_path,
             project_name=project_name,
             root_dir=target_dir.resolve(),
