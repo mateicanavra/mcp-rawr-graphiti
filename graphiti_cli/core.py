@@ -257,7 +257,12 @@ def ensure_dist_for_build() -> None:
             pyproject_content = f.read()
             
         # Check if we're using local wheel and not published package
-        using_local_wheel = PACKAGE_LOCAL_WHEEL_MARKER in pyproject_content
+        # Fix: Check for the marker ONLY in uncommented lines
+        using_local_wheel = any(
+            PACKAGE_LOCAL_WHEEL_MARKER in line
+            for line in pyproject_content.splitlines()
+            if not line.strip().startswith('#')
+        )
         using_published = any(
             line.strip().startswith(PACKAGE_PUBLISHED_PREFIX) 
             for line in pyproject_content.splitlines()
