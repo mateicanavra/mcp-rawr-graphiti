@@ -49,6 +49,7 @@ HELP_CMD_DOWN = f"Stop and remove all containers using Docker Compose. {EMOJI_DO
 HELP_CMD_RESTART = f"Restart all containers: runs 'down' then 'up'. {EMOJI_RESTART}"
 HELP_CMD_RELOAD = f"Restart a specific running service container. {EMOJI_RELOAD}"
 HELP_CMD_COMPOSE = f"Generate docker-compose.yml from base and project configs. {EMOJI_COMPOSE}"
+HELP_CMD_CHECK_SETUP = f"Verify environment setup (Docker, .env, paths). ✅"
 
 # Argument help texts
 HELP_ARG_PROJECT_NAME = "Name of the target project."
@@ -172,6 +173,13 @@ def compose():
     Generate docker-compose.yml from base and project configs. ⚙️
     """
     commands.docker_compose_generate()
+
+@app.command()
+def check_setup():
+    """
+    Verify environment setup (Docker, .env, paths). ✅
+    """
+    commands.check_setup()
 
 
 # Allow running the script directly for development/testing

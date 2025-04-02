@@ -32,7 +32,7 @@ RUN mkdir -p /dist/
 # Copy the dist directory contents (containing local wheels)
 # This step allows installing local packages like graphiti-core
 # Ensure 'dist' exists in your project root and contains necessary wheels before building
-COPY dist/* /dist/
+# COPY dist/* /dist/ # Commented out as it's not needed when using published graphiti-core
 
 # Copy project configuration
 COPY pyproject.toml uv.lock* ./

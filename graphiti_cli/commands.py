@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 import os
 import re  # For entity name validation
+import dotenv # Import dotenv for loading .env file
 
 from . import core
 from . import yaml_utils
@@ -104,6 +105,93 @@ def docker_compose_generate():
     except Exception as e:
         print(f"{core.RED}Error: Failed to generate docker-compose.yml file: {e}{core.NC}")
         sys.exit(1)
+
+# --- Setup Verification Command ---
+
+def check_setup():
+    """
+    Verify that the environment is set up correctly for running Graphiti MCP.
+    """
+    print(f"{core.BOLD}Running setup checks...{core.NC}")
+    all_ok = True
+    
+    # 1. Check Repo Root
+    print(f"  Checking repository root detection...", end=" ")
+    try:
+        repo_root = core.get_repo_root()
+        if repo_root and repo_root.is_dir():
+            print(f"{core.GREEN}OK ({repo_root}){core.NC}")
+        else:
+            print(f"{core.RED}Failed (Could not determine repository root){core.NC}")
+            all_ok = False
+    except SystemExit:  # get_repo_root exits if not found
+        # Error message already printed by get_repo_root
+        all_ok = False
+    except Exception as e:
+        print(f"{core.RED}Failed ({e}){core.NC}")
+        all_ok = False
+        
+    # 2. Check .env file and essential variables
+    print(f"  Checking .env file and essential variables...", end=" ")
+    try:
+        # Explicitly load from .env in the repo root
+        # dotenv.load_dotenv() by default searches parent dirs, which might be confusing
+        env_path = core.get_repo_root() / ".env"
+        if env_path.exists():
+            loaded = dotenv.load_dotenv(dotenv_path=env_path, override=True)
+            if not loaded:
+                print(f"{core.YELLOW}Warning: Found .env file but failed to load it.{core.NC}")
+            
+            # Check essential variables
+            missing_vars = []
+            required_vars = ["NEO4J_USER", "NEO4J_PASSWORD", "OPENAI_API_KEY"]
+            for var in required_vars:
+                if not os.getenv(var):
+                    missing_vars.append(var)
+            
+            if not missing_vars:
+                print(f"{core.GREEN}OK (Loaded {env_path}, required variables present){core.NC}")
+            else:
+                print(f"{core.RED}Failed (Missing variables: {', '.join(missing_vars)}){core.NC}")
+                all_ok = False
+        else:
+            print(f"{core.RED}Failed (.env file not found at {env_path}){core.NC}")
+            all_ok = False
+    except Exception as e:
+        print(f"{core.RED}Failed (Error checking .env: {e}){core.NC}")
+        all_ok = False
+
+    # 3. Check Docker command availability and daemon status
+    print(f"  Checking Docker status...", end=" ")
+    docker_ok = False
+    try:
+        # Check if docker command exists
+        if shutil.which("docker"):
+            # Check if docker daemon is running (simple check using docker info)
+            result = core.run_command(["docker", "info"], check=False) # Don't exit on failure here
+            if result.returncode == 0:
+                print(f"{core.GREEN}OK (Docker command found and daemon appears responsive){core.NC}")
+                docker_ok = True
+            else:
+                print(f"{core.RED}Failed (Docker command found, but daemon seems unresponsive or errored){core.NC}")
+                print(f"  {core.YELLOW}Tip: Ensure Docker Desktop or Docker Engine service is running.{core.NC}")
+                all_ok = False
+        else:
+            print(f"{core.RED}Failed (Docker command not found in PATH){core.NC}")
+            print(f"  {core.YELLOW}Tip: Ensure Docker is installed and its command is in your system's PATH.{core.NC}")
+            all_ok = False
+    except Exception as e:
+        print(f"{core.RED}Failed (Error checking Docker: {e}){core.NC}")
+        all_ok = False
+
+    # Final Summary
+    print("-" * 20)
+    if all_ok:
+        print(f"{core.GREEN}{core.BOLD}Setup checks passed successfully!{core.NC}")
+        print(f"You should be able to run {core.CYAN}graphiti compose{core.NC} and {core.CYAN}graphiti up{core.NC}.")
+    else:
+        print(f"{core.RED}{core.BOLD}Some setup checks failed.{core.NC} Please review the messages above.")
+        sys.exit(1) # Exit with error code if checks fail
 
 # --- Project/File Management Commands ---
 

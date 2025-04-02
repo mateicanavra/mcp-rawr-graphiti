@@ -1,5 +1,5 @@
 [project]
-name = "mcp-rawr-graphiti"
+name = "rawr-mcp-graphiti"
 version = "0.1.0"
 description = "Graphiti MCP Server"
 readme = "README.md"
