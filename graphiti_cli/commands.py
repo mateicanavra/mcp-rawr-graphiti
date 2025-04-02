@@ -46,7 +46,6 @@ def docker_up(detached: bool, log_level: str):
         detached (bool): Whether to run in detached mode
         log_level (str): Log level to use
     """
-    core.ensure_docker_compose_file()
     core.ensure_dist_for_build()
     cmd = ["up", "--build", "--force-recreate"]
     core.run_docker_compose(cmd, log_level, detached)
@@ -59,7 +58,6 @@ def docker_down(log_level: str):
     Args:
         log_level (str): Log level to use
     """
-    core.ensure_docker_compose_file()  # Needed for compose to find project
     core.run_docker_compose(["down"], log_level)
     print(f"{core.GREEN}Docker compose down completed.{core.NC}")
 
@@ -72,7 +70,6 @@ def docker_restart(detached: bool, log_level: str):
         log_level (str): Log level to use
     """
     print(f"{core.BOLD}Restarting Graphiti containers: first down, then up...{core.NC}")
-    core.ensure_docker_compose_file()  # Ensure docker-compose.yml exists before the restart sequence
     core.run_docker_compose(["down"], log_level)
     docker_up(detached, log_level)
     print(f"{core.GREEN}Restart sequence completed.{core.NC}")

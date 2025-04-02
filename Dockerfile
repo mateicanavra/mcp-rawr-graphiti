@@ -42,7 +42,7 @@ COPY pyproject.toml uv.lock* ./
 # Add --system to allow installation into the container's Python environment
 RUN uv pip sync uv.lock --system
 
-# If you want to install the project itself (mcp-rawr-graphiti), uncomment the line below
+# If you want to install the project itself (rawr-mcp-graphiti), uncomment the line below
 # This makes 'constants.py', 'graphiti_mcp_server.py', etc., available as installed modules
 # RUN uv pip install . --no-deps --system
 
