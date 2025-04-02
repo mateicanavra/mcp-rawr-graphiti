@@ -36,6 +36,7 @@ ENV_MCP_GROUP_ID = "MCP_GROUP_ID"         # Group ID (namespace) for graph data
 ENV_MCP_USE_CUSTOM_ENTITIES = "MCP_USE_CUSTOM_ENTITIES"  # Whether to use custom entity extraction
 ENV_MCP_USE_CUSTOM_ENTITIES_VALUE = "true"  # Value to enable custom entity extraction
 ENV_MCP_ENTITY_TYPE_DIR = "MCP_ENTITY_TYPE_DIR"  # Directory for custom entity type definitions
+ENV_MCP_ENTITY_TYPES = "MCP_ENTITY_TYPES"  # Added
 
 # --- Container Path Constants ---
 # Paths used within Docker containers for entity type mounting
