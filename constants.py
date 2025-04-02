@@ -19,6 +19,7 @@ DIR_ENTITIES = "entities"      # Entity definitions
 DIR_MCP_SERVER = "mcp_server"  # MCP server code
 DIR_ENTITY_TYPES = "entity_types"  # Entity type definitions for knowledge graph
 DIR_DIST = "dist"              # Distribution directory for built packages
+DIR_PROJECT_ASSETS = "project_assets"  # Directory containing project initialization assets
 
 # Standard files used in Graphiti projects
 FILE_GIT_KEEP = ".gitkeep"           # Placeholder to preserve empty directories in Git
