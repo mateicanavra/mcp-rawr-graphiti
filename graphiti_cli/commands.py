@@ -17,7 +17,7 @@ from constants import (
     CONFIG_FILENAME, ENTITY_FILE_EXTENSION,
     CONFIG_KEY_SERVICES, CONFIG_KEY_ID, CONFIG_KEY_CONTAINER_NAME, 
     CONFIG_KEY_PORT_DEFAULT, CONFIG_KEY_GROUP_ID, CONFIG_KEY_ENTITY_DIR,
-    CONFIG_KEY_ENVIRONMENT,
+    CONFIG_KEY_ENVIRONMENT, CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG,
     # Default values
     DEFAULT_CUSTOM_CONTAINER_NAME, DEFAULT_CUSTOM_PORT, DEFAULT_ENTITY_DIR_NAME,
     # Environment variables
@@ -230,6 +230,7 @@ def init_project(project_name: str, target_dir: Path):
     {CONFIG_KEY_ENTITY_DIR}: "{DEFAULT_ENTITY_DIR_NAME}"           # Relative path to entity definitions within ai/graph
     {CONFIG_KEY_ENVIRONMENT}:                     # Optional: Add non-secret env vars here
       {ENV_GRAPHITI_LOG_LEVEL}: "{DEFAULT_LOG_LEVEL_STR}"
+    {CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG}: true   # Automatically update .cursor/mcp.json during 'compose'
 """
     try:
         config_path.write_text(config_content)

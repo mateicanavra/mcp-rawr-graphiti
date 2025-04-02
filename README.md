@@ -30,7 +30,13 @@ This repository contains the Graphiti Model Context Protocol (MCP) Server and it
 
 ## Global CLI Installation (Recommended for General Use)
 
-If you only intend to *use* the `graphiti` CLI (e.g., to manage projects or run Docker services) and not actively develop the CLI itself, installing it globally using `pipx` is the recommended approach. This avoids dependency conflicts with other Python projects.
+If you only intend to *use* the `graphiti` CLI (e.g., to manage projects or run Docker services) and not actively develop the CLI itself, installing it globally using `pipx` is the **strongly recommended** approach. `pipx` installs the package into an isolated environment, making the `graphiti` command available system-wide without interfering with other Python projects or your system Python installation.
+
+**Why `pipx` is Preferred:**
+
+*   **Isolation:** Prevents dependency conflicts between the CLI and other projects.
+*   **Cleanliness:** Keeps your global Python environment tidy.
+*   **Safety:** Avoids potential issues caused by `sudo pip install` or modifying the system Python.
 
 **Prerequisites:**
 
@@ -44,22 +50,36 @@ If you only intend to *use* the `graphiti` CLI (e.g., to manage projects or run 
     # Close and reopen your terminal or source your shell profile for PATH changes to take effect
     ```
 
-**Installation:**
+**Installation Methods:**
 
-Assuming the package `rawr-mcp-graphiti` is published on PyPI:
+1.  **Installing from Local Source (Recommended for Now):**
+    To install the CLI globally directly from your local cloned repository:
+    ```bash
+    # Replace '/path/to/your/mcp-rawr-graphiti' with the actual absolute path
+    pipx install /path/to/your/mcp-rawr-graphiti
+    ```
+    This builds the package from your local code and installs it via `pipx`. You can upgrade later if needed using `pipx upgrade rawr-mcp-graphiti`.
 
-```bash
-pipx install rawr-mcp-graphiti
-```
+2.  **Installing from PyPI (Once Published):**
+    Once the package `rawr-mcp-graphiti` is published on PyPI:
+    ```bash
+    pipx install rawr-mcp-graphiti
+    ```
 
-**Usage Note:**
+**⚠️ Warning: Avoid Direct Global `pip` Installation ⚠️**
 
-Even when installed globally, the `graphiti` CLI commands (like `compose`, `up`, `check-setup`, `init`) usually need to know the context of the project you're working on. Therefore, you will typically need to:
+*   **Do NOT use `pip install .` or `pip install -e .` outside of a virtual environment (`.venv`)** for global access. This can pollute your global Python environment and lead to hard-to-debug dependency conflicts.
+*   **Do NOT use `sudo pip install`**. This modifies your system Python and can break system tools or other applications.
+*   `pipx` is specifically designed for safely installing Python CLI applications like this one.
+
+**Usage Note & Potential PATH Conflicts:**
+
+Even when installed globally via `pipx`, the `graphiti` CLI commands (like `compose`, `up`, `check-setup`, `init`) usually need context about the project you're managing. Therefore, you will typically need to:
 
 *   **Run `graphiti` commands from within the root directory** of the project you want to manage (the directory containing the `.env` file and where `docker-compose.yml` will be generated).
-*   OR (less common for `pipx` installs), set the `MCP_GRAPHITI_REPO_PATH` environment variable if required by specific workflows running outside a project context.
+*   OR (less common), set the `MCP_GRAPHITI_REPO_PATH` environment variable if required by specific workflows running outside a project context.
 
-This global installation mainly simplifies access to the `graphiti` command itself without needing to activate a specific virtual environment for the CLI.
+**Virtual Environment Precedence:** If you have activated a project-specific virtual environment (e.g., `source .venv/bin/activate` within the `mcp-rawr-graphiti` dev setup), the `graphiti` command found in *that* environment (`.venv/bin/graphiti`) will take precedence over the globally installed `pipx` version due to standard `PATH` order. This is expected behavior. To use the global `pipx` version, simply ensure no project virtual environment is active (`deactivate` if necessary).
 
 ## Installation and Setup (for Development)
 
