@@ -67,6 +67,7 @@ CONFIG_KEY_PORT_DEFAULT = "port_default"    # Default port
 CONFIG_KEY_GROUP_ID = "group_id"            # Group ID for namespacing
 CONFIG_KEY_ENTITY_DIR = "entity_dir"        # Entity directory path
 CONFIG_KEY_ENVIRONMENT = "environment"      # Environment variables
+CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG = "sync_cursor_mcp_config" # Flag to sync mcp.json
 
 # --- Registry File Key Constants ---
 # Keys used in the project registry file (mcp-projects.yaml)

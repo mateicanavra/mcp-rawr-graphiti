@@ -19,3 +19,8 @@ projects:
     config_file: 
       /Users/mateicanavra/Documents/.nosync/DEV/magic-apply-candidates/ai/graph/mcp-config.yaml
     enabled: true
+  civ7:
+    root_dir: /Users/mateicanavra/Documents/.nosync/DEV/civ7-modding-tools
+    config_file: 
+      /Users/mateicanavra/Documents/.nosync/DEV/civ7-modding-tools/ai/graph/mcp-config.yaml
+    enabled: true
