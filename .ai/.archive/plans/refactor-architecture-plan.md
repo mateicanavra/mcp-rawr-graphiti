@@ -121,7 +121,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 *   **File:** `mcp-server/graphiti_mcp_server.py`
 *   **Actions:**
     1.  Inside the `initialize_server` function (after `args = parser.parse_args()` approx. @LINE:761):
-    2.  Define the expected path for base types within the container: `container_base_entity_dir = "/app/entities/base"` (Ensure this matches Dockerfile copy destination).
+    2.  Define the expected path for base types within the container: `container_base_entity_dir = "/app/entities"` (Ensure this matches Dockerfile copy destination).
     3.  Add logic to *always* load base types first:
         ```python
         if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):
@@ -157,7 +157,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 *   **Objective:** Confirm base entities are copied into the image.
 *   **File:** `Dockerfile` (provided in clipboard)
 *   **Actions:**
-    1.  Verify the line `COPY entities/ ./entities/` (@LINE:21) is present and correctly copies `mcp-server/entities/base` into `/app/entities/base` within the image.
+    1.  Verify the line `COPY entities/ ./entities/` (@LINE:21) is present and correctly copies `mcp-server/entities` into `/app/entities` within the image.
 *   **Acceptance Criteria:** The Docker build process includes the base entity definitions.
 
 ---

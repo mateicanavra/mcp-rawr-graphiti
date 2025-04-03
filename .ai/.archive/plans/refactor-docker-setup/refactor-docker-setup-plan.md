@@ -235,7 +235,7 @@ This plan assumes you have the final versions of `docker-compose.yml-NEW`, `Dock
                 # --- Configuration for entrypoint.sh ---
                 MCP_GROUP_ID: "core-api"
                 MCP_USE_CUSTOM_ENTITIES: "true"
-                MCP_ENTITIES_DIR: "entities/base"
+                MCP_ENTITIES_DIR: "entities"
                 # MCP_ENTITIES: "" # Explicitly empty/unset
                 MCP_DESTROY_GRAPH: "false" # Default to false
 

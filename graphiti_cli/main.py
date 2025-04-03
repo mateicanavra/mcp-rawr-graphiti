@@ -9,7 +9,18 @@ from typing_extensions import Annotated  # Preferred for Typer >= 0.9
 
 # Import command functions and core utilities
 from . import commands
-from constants import LogLevel
+from constants import (
+    # ANSI Colors
+    RED, GREEN, YELLOW, CYAN, BOLD, NC,
+    # Logging
+    LogLevel, DEFAULT_LOG_LEVEL_STR,
+    # File paths
+    CONFIG_FILENAME,
+    # Service name
+    SERVICE_NAME_PREFIX, DEFAULT_SERVICE_SUFFIX,
+    # Environment variables
+    ENV_REPO_PATH
+)
 from .utils.config import get_repo_root
 
 # --- Application Constants ---
@@ -58,7 +69,7 @@ HELP_ARG_TARGET_DIR = "Target project root directory."
 HELP_ARG_ENTITY_NAME = "Name for the new entity set (e.g., 'my-entities')."
 HELP_ARG_TARGET_DIR_CONFIG = "Target project root directory containing ai/graph/mcp-config.yaml."
 HELP_ARG_PROJECT_NAME_RULES = "Name of the target project for rule setup."
-HELP_ARG_SERVICE_NAME = "Name of the service to reload (e.g., 'mcp-test-project-1-main')."
+HELP_ARG_SERVICE_NAME = f"Name of the service to reload (e.g., 'mcp-test-project-1{DEFAULT_SERVICE_SUFFIX}')."
 
 # Initialize Typer app
 app = typer.Typer(

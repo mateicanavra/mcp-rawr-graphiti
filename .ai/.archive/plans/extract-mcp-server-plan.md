@@ -39,7 +39,7 @@ The repository should contain updated documentation (`README.md`) explaining its
         *   Verify `[tool.setuptools.py-modules]` includes `constants`.
     *   Action: Verify `Dockerfile`.
         *   Ensure `COPY dist/* /dist/` line is absent or commented out.
-        *   Verify all necessary source files for the *root* MCP server (`graphiti_mcp_server.py`, `constants.py`, `entities/base/`, `entrypoint.sh`) are copied.
+        *   Verify all necessary source files for the *root* MCP server (`graphiti_mcp_server.py`, `constants.py`, `entities/`, `entrypoint.sh`) are copied.
     *   Action: Verify `mcp-projects.yaml`.
         *   Crucially, ensure the absolute paths listed for external projects are correct for the target deployment environment. This file will likely need **manual adjustment** by the user after cloning the new repository.
     *   Action: Verify `scripts/graphiti`.

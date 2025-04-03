@@ -1,6 +1,6 @@
 """Preference entity for Graphiti MCP Server."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Preference(BaseModel):
@@ -16,6 +16,8 @@ class Preference(BaseModel):
     7. Only extract preferences directly stated by the user, not preferences of others they mention
     8. Provide a concise but specific description that captures the nature of the preference
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     category: str = Field(
         ...,

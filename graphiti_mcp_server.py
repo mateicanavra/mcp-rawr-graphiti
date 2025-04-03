@@ -731,11 +731,56 @@ async def get_episodes(
         return {'error': f'Error getting episodes: {error_msg}'}
 
 
-@mcp.tool()
-async def clear_graph() -> Union[SuccessResponse, ErrorResponse]:
-    """Clear all data from the Graphiti knowledge graph and rebuild indices."""
-    global graphiti_client
+# Global variable to store the unique code for the current session
+graph_clear_auth_code = str(uuid.uuid4())[:8]
 
+@mcp.tool()
+async def clear_graph(auth: str = None) -> Union[SuccessResponse, ErrorResponse]:
+    """Clear all data from the Graphiti knowledge graph and rebuild indices.
+    
+    CAUTION: This is a destructive operation that will permanently delete ALL data in the graph.
+    Before using this tool, you MUST first ask the user for explicit permission and authenticate.
+    
+    To authorize this action:
+    1. First call this function without the auth parameter to get the unique authorization code
+    2. Ask the user to explicitly confirm they want to delete ALL graph data
+    3. Call the function again with the auth parameter set to BOTH the authorization code AND "DELETE_THIS_GRAPH"
+       (Example: if code is "a1b2c3d4", auth should be "a1b2c3d4_DELETE_THIS_GRAPH")
+    
+    Args:
+        auth: Authentication string that must include the unique code plus "_DELETE_THIS_GRAPH"
+    """
+    global graphiti_client, graph_clear_auth_code
+    
+    # Check if the current group ID is the root group ID
+    root_group_id = os.environ.get('MCP_ROOT_GROUP_ID', 'root')
+    current_group_id = config.group_id
+    
+    if current_group_id != root_group_id:
+        return {
+            'error': f"PERMISSION DENIED: Graph clearing operations are restricted to the root group ID. "
+                    f"Current group ID: '{current_group_id}', required root group ID: '{root_group_id}'."
+        }
+    
+    # Step 1: If no auth provided, return error with the current auth code
+    if auth is None:
+        return {
+            'error': f"AUTHENTICATION REQUIRED: To clear the graph, you must first request permission from the user. "
+                    f"Then call this function again with auth parameter set to '{graph_clear_auth_code}_DELETE_THIS_GRAPH'."
+        }
+
+    # Step 2: Validate the provided auth string
+    expected_auth = f"{graph_clear_auth_code}_DELETE_THIS_GRAPH"
+    if auth != expected_auth:
+        # Generate a new code for security (prevents brute force attempts)
+        graph_clear_auth_code = str(uuid.uuid4())[:8]
+        return {
+            'error': f"INVALID AUTHENTICATION: Authorization failed. A new authorization code has been generated. "
+                    f"To clear the graph, first request permission from the user, then call this function again "
+                    f"with auth parameter set to '{graph_clear_auth_code}_DELETE_THIS_GRAPH'."
+        }
+
+    # If we get here, authentication was successful
     if graphiti_client is None:
         return {'error': 'Graphiti client not initialized'}
 
@@ -746,10 +791,17 @@ async def clear_graph() -> Union[SuccessResponse, ErrorResponse]:
         # Use cast to help the type checker understand that graphiti_client is not None
         client = cast(Graphiti, graphiti_client)
 
+        # Log the authorized graph clear operation
+        logger.warning(f"AUTHORIZED GRAPH CLEAR: Clearing all data from the graph with authorization '{auth}'")
+        
         # clear_data is already imported at the top
         await clear_data(client.driver)
         await client.build_indices_and_constraints()
-        return {'message': 'Graph cleared successfully and indices rebuilt'}
+        
+        # Generate a new code after successful operation for future security
+        graph_clear_auth_code = str(uuid.uuid4())[:8]
+        
+        return {'message': 'Graph cleared successfully and indices rebuilt. All data has been deleted.'}
     except Exception as e:
         error_msg = str(e)
         logger.error(f'Error clearing graph: {error_msg}')
@@ -865,7 +917,7 @@ async def initialize_server() -> MCPConfig:
         logger.info(f'Generated random group_id: {config.group_id}')
 
     # Define the expected path for base entities within the container
-    container_base_entity_dir = "/app/entities/base"
+    container_base_entity_dir = "/app/entities"
     
     # Always load base entities first
     if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):

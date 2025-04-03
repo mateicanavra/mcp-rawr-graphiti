@@ -3,7 +3,7 @@
 This module defines the Preference entity, which represents a user's expressed likes, dislikes, or preferences.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Preference(BaseModel):
@@ -26,6 +26,8 @@ class Preference(BaseModel):
     ## Output Format
     A Preference entity with fields populated according to explicitly available information.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     description: str = Field(..., description="Description of the preference.")
     value: str = Field(..., description="Value or setting of the preference.")

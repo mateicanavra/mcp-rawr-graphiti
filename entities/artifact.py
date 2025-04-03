@@ -3,7 +3,7 @@
 This module defines the Artifact entity, which represents outputs or artifacts from work activities.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Artifact(BaseModel):
@@ -27,6 +27,8 @@ class Artifact(BaseModel):
     ## Output Format
     An Artifact entity with fields populated according to explicitly available information.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     name: str = Field(..., description="Name of the artifact.")
     type: str = Field(..., description="Type or category of the artifact.")

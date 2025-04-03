@@ -9,20 +9,20 @@
     *   The core registry logic (state and functions: `register_entity`, `get_entities`, `get_entity_subset`) resides in `mcp_server/entity_registry.py`.
     *   `mcp_server/entities/` serves as the main package directory for entity *definitions*.
     *   `mcp_server/entities/__init__.py` makes the `entities` directory a Python package and re-exports the registry functions from `entity_registry.py`, allowing imports like `from mcp_server.entities import get_entities`.
-    *   Specific sets of entity definitions are organized into subdirectories, e.g., `mcp_server/entities/base/` and `mcp_server/entities/example/`.
-    *   The auto-loader function (`load_entities_from_directory` in `graphiti_mcp_server.py`) dynamically imports `.py` files from specified directories (e.g., `entities/base` by default, or paths provided via `--entities-dir`), inspects them for valid Pydantic models with docstrings, and registers them using `register_entity` (which resolves to the function in `entity_registry.py`).
+    *   Specific sets of entity definitions are organized into subdirectories, e.g., `mcp_server/entities/` and `mcp_server/entities/example/`.
+    *   The auto-loader function (`load_entities_from_directory` in `graphiti_mcp_server.py`) dynamically imports `.py` files from specified directories (e.g., `entities` by default, or paths provided via `--entities-dir`), inspects them for valid Pydantic models with docstrings, and registers them using `register_entity` (which resolves to the function in `entity_registry.py`).
 *   **Outcome:** The structure aligns with the initial plan, achieving the desired separation of concerns.
 
 **2. Phase 1 Cleanup: COMPLETED ✓**
 
 The following refinements have been implemented for enhanced clarity and adherence to the principle of least redundancy:
 
-*   **Redundant Sub-Package Initializers:** Verified that `mcp_server/entities/base/__init__.py` and `mcp_server/entities/example/__init__.py` do not exist in the codebase, so no action was needed.
+*   **Redundant Sub-Package Initializers:** Verified that `mcp_server/entities/__init__.py` and `mcp_server/entities/example/__init__.py` do not exist in the codebase, so no action was needed.
 *   **Redundant Explicit Imports:** Successfully removed the following line from `mcp_server/graphiti_mcp_server.py`:
     ```python
     from mcp_server.entities.base import requirements, preferences, procedures
     ```
-    This import was not functionally required for runtime registration because the auto-loader handles the discovery and registration of these types from the `entities/base` directory. Removing it reinforces reliance on the dynamic loading mechanism and simplifies the top-level namespace.
+    This import was not functionally required for runtime registration because the auto-loader handles the discovery and registration of these types from the `entities` directory. Removing it reinforces reliance on the dynamic loading mechanism and simplifies the top-level namespace.
 
 **3. Phase 2 - `graphiti` Dev Symlinking Script: COMPLETED ✓**
 
@@ -75,7 +75,7 @@ The following refinements have been implemented for enhanced clarity and adheren
 *   **Prerequisites:** Phase 1 Cleanup complete.
 *   **Implementation Steps:**
     *   Modify the `command` section of services in `mcp_server/docker-compose.yml`.
-    *   **Test Case 1 (Base Only):** For one service (e.g., `graphiti-magic-api`), ensure the command includes `--use-custom-entities` but *only* specifies the base directory: `"--entities-dir", "mcp_server/entities/base"`.
+    *   **Test Case 1 (Base Only):** For one service (e.g., `graphiti-magic-api`), ensure the command includes `--use-custom-entities` but *only* specifies the base directory: `"--entities-dir", "mcp_server/entities"`.
     *   **Test Case 2 (Example Only):** For another service (e.g., `graphiti-civ7`), modify the command to load *only* the example types: `"--entities-dir", "mcp_server/entities/example"`.
     *   **Test Case 3 (Specific Subset via CLI - Optional):** Explore using the `--entities` argument.
     *   **Execution:** Run `docker compose down && docker compose up --build --force-recreate`.

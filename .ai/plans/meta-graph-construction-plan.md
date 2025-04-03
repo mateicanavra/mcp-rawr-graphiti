@@ -95,7 +95,7 @@ Here is a step-by-step plan to implement the meta-graph entities:
 ### Phase 4: Cleanup and Verification [PENDING]
 
 8. **Address Existing `base/` Directory:**
-    - **Decision Point:** Determine the fate of `entities/base/preferences.py`, `procedures.py`, and `requirements.py`.
+    - **Decision Point:** Determine the fate of `entities/preferences.py`, `procedures.py`, and `requirements.py`.
         - **Option A (Replace):** If the new models in `interaction/`, `actions/`, `constraints/` fully supersede these, delete the `base/` directory and its contents.
         - **Option B (Refactor/Merge):** If the existing files contain valuable logic or variations, refactor them to fit the new structure or merge their functionality.
         - **Option C (Defer):** Leave the `base/` directory for now and create a follow-up task to reconcile it.
@@ -111,7 +111,7 @@ Here is a step-by-step plan to implement the meta-graph entities:
 - All 14 models are successfully registered upon importing the `entities` package.
 - Calling `get_entities()` after import returns a dictionary containing all 14 registered types.
 - The code passes configured linting and type checking rules.
-- The existing files in `entities/base/` are consciously addressed (even if deferred).
+- The existing files in `entities/` are consciously addressed (even if deferred).
 
 ## 8. Potential Risks/Dependencies
 

@@ -3,7 +3,7 @@
 This module defines the Agent entity, which represents an AI agent persona or role.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Agent(BaseModel):
@@ -13,6 +13,8 @@ class Agent(BaseModel):
     1. Explicitly named roles or personas.
     2. Clearly stated skills, expertise, or responsibilities.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     id: str = Field(..., description="Unique identifier for the agent.")
     name: str = Field(..., description="Human-readable name of the agent.")
