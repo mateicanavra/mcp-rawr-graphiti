@@ -20,7 +20,7 @@ def temp_repo_root():
         tmp_path = Path(tmpdir)
         # Create any necessary subdirectories that would exist in a real repo
         (tmp_path / "ai" / "graph").mkdir(parents=True, exist_ok=True)
-        (tmp_path / "entity_types" / "base").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "entities" / "base").mkdir(parents=True, exist_ok=True)
         
         original_dir = os.getcwd()
         os.chdir(tmp_path)  # Change to temp dir for duration of test

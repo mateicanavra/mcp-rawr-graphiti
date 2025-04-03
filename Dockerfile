@@ -59,7 +59,7 @@ COPY --from=builder /root/.local/bin /root/.local/bin
 # Copy application code
 COPY graphiti_mcp_server.py ./
 COPY constants.py ./
-COPY entity_types/ ./entity_types/
+COPY entities/ ./entities/
 COPY entrypoint.sh .
 
 # Make entrypoint script executable

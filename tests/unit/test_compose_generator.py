@@ -41,7 +41,7 @@ services:
     ports:
       - "8000:${MCP_PORT}"
     volumes:
-      - ./entity_types:/app/entity_types:ro
+      - ./entities:/app/entities:ro
 """
 
 PROJECTS_REGISTRY_YAML = """

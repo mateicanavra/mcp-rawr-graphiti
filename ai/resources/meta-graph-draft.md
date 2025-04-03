@@ -3,7 +3,7 @@
 ## Directory Structure
 
 ```
-entity_types/
+entities/
 ├── actions/
 │   └── procedure.py
 ├── constraints/

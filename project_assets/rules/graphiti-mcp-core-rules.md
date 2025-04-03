@@ -88,7 +88,7 @@ For effective project work, be aware of the three key types of Graphiti rules:
 ## MCP Server Codebase Organization
 
 - **Prefer flat directory structures:** Use consolidated, shallow directory hierarchies over deeply nested ones.
-- **Group similar entity types:** Place related entity types within a single directory (e.g., `entity_types/graphiti/`).
+- **Group similar entity types:** Place related entity types within a single directory (e.g., `entities/graphiti/`).
 - **Follow semantic naming:** Name entity type files according to their semantic type (e.g., `ArchitecturalPattern.py`) rather than using generic names.
 - **Remove redundant files:** Keep the codebase clean by removing unnecessary `__init__.py` files in auto-loaded directories.
 - **Clean up after reorganization:** Systematically remove empty directories after file restructuring.

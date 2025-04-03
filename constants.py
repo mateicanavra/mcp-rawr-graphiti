@@ -32,7 +32,7 @@ DIR_AI = "ai"                  # AI-related files
 DIR_GRAPH = "graph"            # Knowledge graph data
 DIR_ENTITIES = "entities"      # Entity definitions
 DIR_MCP_SERVER = "mcp_server"  # MCP server code
-DIR_ENTITY_TYPES = "entity_types"  # Entity type definitions for knowledge graph
+DIR_ENTITY_TYPES = "entities"  # Entity type definitions for knowledge graph
 DIR_DIST = "dist"              # Distribution directory for built packages
 DIR_PROJECT_ASSETS = "project_assets"  # Directory containing project initialization assets
 
@@ -55,7 +55,7 @@ ENV_MCP_ENTITY_TYPES = "MCP_ENTITY_TYPES"  # Added
 
 # --- Container Path Constants ---
 # Paths used within Docker containers for entity type mounting
-CONTAINER_ENTITY_PATH = "/app/entity_types"  # Default entity types
+CONTAINER_ENTITY_PATH = "/app/entities"  # Default entity types
 PROJECT_CONTAINER_ENTITY_PATH = "/app/project_entities"  # Project-specific entity definitions
 
 # --- Docker/Port Constants ---

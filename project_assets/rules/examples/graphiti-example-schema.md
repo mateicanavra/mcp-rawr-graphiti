@@ -1,6 +1,6 @@
 ---
 description: Use this rule when working specifically within the 'example' project context to understand its unique entities (Product, Company), relationships (PRODUCES), and extraction guidelines.
-globs: mcp_server/entity_types/example/*.py
+globs: mcp_server/entities/example/*.py
 alwaysApply: false
 ---
 
@@ -17,10 +17,10 @@ This document outlines the specific knowledge graph schema for the 'example' pro
 The following entity types are defined for this project:
 
 *   **`Product`**: Represents a specific good or service offered.
-    *   Reference: `@mcp_server/entity_types/example/custom_entity_example.py`
+    *   Reference: `@mcp_server/entities/example/custom_entity_example.py`
     *   Fields: `name` (str), `description` (str), `category` (str)
 *   **`Company`**: Represents a business organization.
-    *   Reference: `@mcp_server/entity_types/example/company_entity.py`
+    *   Reference: `@mcp_server/entities/example/company_entity.py`
     *   Fields: `name` (str), `industry` (str | None)
 
 ## 2. Defined Relationships (Facts)
