@@ -1,6 +1,6 @@
-"""Preference entity type for Graphiti MCP Server.
+"""Preference entity for Graphiti MCP Server.
 
-This module defines the Preference entity type, which represents a user's expressed likes, dislikes, or preferences.
+This module defines the Preference entity, which represents a user's expressed likes, dislikes, or preferences.
 """
 
 from pydantic import BaseModel, Field

@@ -1,4 +1,4 @@
-"""Example of how to create a custom entity type for Graphiti MCP Server."""
+"""Example of how to create a custom entity for Graphiti MCP Server."""
 
 from pydantic import BaseModel, Field
 

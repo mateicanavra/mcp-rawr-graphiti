@@ -10,7 +10,7 @@ from constants import (
     # Files
     FILE_PYPROJECT_TOML,
     # Directory structure
-    DIR_ENTITY_TYPES,
+    DIR_ENTITIES,
 )
 
 def _validate_repo_path(path: Path) -> bool:
@@ -28,10 +28,10 @@ def _validate_repo_path(path: Path) -> bool:
     
     # Check for essential directories
     graphiti_cli_dir = path / "graphiti_cli"
-    entity_types_dir = path / DIR_ENTITY_TYPES
+    entities_dir = path / DIR_ENTITIES
     pyproject_file = path / FILE_PYPROJECT_TOML
     
-    return graphiti_cli_dir.is_dir() and entity_types_dir.is_dir() and pyproject_file.is_file()
+    return graphiti_cli_dir.is_dir() and entities_dir.is_dir() and pyproject_file.is_file()
 
 def get_mcp_server_dir() -> Path:
     """

@@ -43,7 +43,7 @@ HELP_LOG_LEVEL_COMPOSE = "Set logging level for Docker Compose execution."
 
 # Command help texts
 HELP_CMD_INIT = f"Initialize a project: create ai/graph structure with config, entities dir, and rules. {EMOJI_INIT}"
-HELP_CMD_ENTITY = f"Create a new entity type set directory and template file within a project's ai/graph/entities directory. {EMOJI_ENTITY}"
+HELP_CMD_ENTITY = f"Create a new entity set directory and template file within a project's ai/graph/entities directory. {EMOJI_ENTITY}"
 HELP_CMD_RULES = f"Setup/update Cursor rules symlinks and schema template for a project. {EMOJI_RULES}"
 HELP_CMD_UP = f"Start all containers using Docker Compose (builds first). {EMOJI_UP}"
 HELP_CMD_DOWN = f"Stop and remove all containers using Docker Compose. {EMOJI_DOWN}"
@@ -55,7 +55,7 @@ HELP_CMD_CHECK_SETUP = f"Verify environment setup (Docker, .env, paths). ✅"
 # Argument help texts
 HELP_ARG_PROJECT_NAME = "Name of the target project."
 HELP_ARG_TARGET_DIR = "Target project root directory."
-HELP_ARG_ENTITY_NAME = "Name for the new entity type set (e.g., 'my-entities')."
+HELP_ARG_ENTITY_NAME = "Name for the new entity set (e.g., 'my-entities')."
 HELP_ARG_TARGET_DIR_CONFIG = "Target project root directory containing ai/graph/mcp-config.yaml."
 HELP_ARG_PROJECT_NAME_RULES = "Name of the target project for rule setup."
 HELP_ARG_SERVICE_NAME = "Name of the service to reload (e.g., 'mcp-test-project-1-main')."
@@ -110,7 +110,7 @@ def entity(
     )] = DEFAULT_DIR
 ):
     """
-    Create a new entity type set directory and template file within a project's ai/graph/entities directory. 📄
+    Create a new entity set directory and template file within a project's ai/graph/entities directory. 📄
     """
     commands.create_entity_set(set_name, target_dir)
 

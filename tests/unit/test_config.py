@@ -12,7 +12,7 @@ from graphiti_cli.utils import config
 from constants import (
     ENV_REPO_PATH,
     FILE_PYPROJECT_TOML,
-    DIR_ENTITY_TYPES,
+    DIR_ENTITIES,
 )
 
 class TestConfigPaths:

@@ -95,10 +95,10 @@ services:
       # Use root-specific variables defined in .env
       MCP_GROUP_ID: "${MCP_ROOT_GROUP_ID:-root}" # Default to 'root' if var not set
       MCP_USE_CUSTOM_ENTITIES: "${MCP_ROOT_USE_CUSTOM_ENTITIES:-true}" # Default to 'true' if var not set
-      MCP_ENTITY_TYPE_DIR: "${MCP_ROOT_ENTITY_TYPE_DIR:-entities/base}" # Default to base dir if var not set
-      # Default MCP_ROOT_ENTITY_TYPES to empty string if not set in .env,
-      # ensuring entrypoint.sh omits --entity-types unless explicitly set
-      MCP_ENTITY_TYPES: "${MCP_ROOT_ENTITY_TYPES:-}"
+      MCP_ENTITIES_DIR: "${MCP_ROOT_ENTITIES_DIR:-entities/base}" # Default to base dir if var not set
+      # Default MCP_ROOT_ENTITIES to empty string if not set in .env,
+      # ensuring entrypoint.sh omits --entities unless explicitly set
+      MCP_ENTITIES: "${MCP_ROOT_ENTITIES:-}"
 
 # --- Volumes ---
 volumes:

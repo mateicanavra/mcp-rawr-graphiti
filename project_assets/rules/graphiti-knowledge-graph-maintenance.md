@@ -27,7 +27,7 @@ This document provides rules for AI agents on how to maintain and update the **p
 ## 3. When to Consult the Project Schema
 
 You **must** consult the relevant `graphiti-[project-name]-schema.md` file **before**:
-- Defining any new entity type or relationship that appears specific to the current project.
+- Defining any new entity or relationship that appears specific to the current project.
 - Extracting entities, facts, or relationships based on project-specific requirements mentioned by the user or discovered in project context.
 - Answering user questions about the project's established knowledge structure, entities, or relationships.
 
@@ -38,9 +38,9 @@ You **must** consult the relevant `graphiti-[project-name]-schema.md` file **bef
 
 ## 5. Schema Evolution and Update Process
 
-Project knowledge schemas are expected to evolve. If you identify a need for a **new** entity type, relationship, property, or a **modification** to an existing one based on user interaction or task requirements:
+Project knowledge schemas are expected to evolve. If you identify a need for a **new** entity, relationship, property, or a **modification** to an existing one based on user interaction or task requirements:
 
-1.  **Identify the Need:** Clearly determine the required change (e.g., "Need a 'SoftwareComponent' entity type," "Need to add a 'dependency' relationship between 'SoftwareComponent' entities," "Need to add a 'version' property to 'SoftwareComponent'").
+1.  **Identify the Need:** Clearly determine the required change (e.g., "Need a 'SoftwareComponent' entity," "Need to add a 'dependency' relationship between 'SoftwareComponent' entities," "Need to add a 'version' property to 'SoftwareComponent'").
 2.  **Consult Existing Schema:** Double-check `graphiti-[project-name]-schema.md` to confirm the element truly doesn't exist or needs modification.
 3.  **Propose Schema Update:**
     - Formulate a proposed change to the `graphiti-[project-name]-schema.md` file.

@@ -1,6 +1,6 @@
-"""Artifact entity type for Graphiti MCP Server.
+"""Artifact entity for Graphiti MCP Server.
 
-This module defines the Artifact entity type, which represents outputs or artifacts from work activities.
+This module defines the Artifact entity, which represents outputs or artifacts from work activities.
 """
 
 from pydantic import BaseModel, Field

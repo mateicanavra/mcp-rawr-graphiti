@@ -1,6 +1,6 @@
-"""Documentation entity type for Graphiti MCP Server.
+"""Documentation entity for Graphiti MCP Server.
 
-This module defines the Documentation entity type, which represents reference materials or documentation resources.
+This module defines the Documentation entity, which represents reference materials or documentation resources.
 """
 
 from pydantic import BaseModel, Field

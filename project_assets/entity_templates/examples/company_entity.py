@@ -1,4 +1,4 @@
-"""Definition for a Company entity type."""
+"""Definition for a Company entity."""
 
 from pydantic import BaseModel, Field
 

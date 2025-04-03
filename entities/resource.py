@@ -1,6 +1,6 @@
-"""Resource entity type for Graphiti MCP Server.
+"""Resource entity for Graphiti MCP Server.
 
-This module defines the Resource entity type, which represents assets or resources utilized by agents or projects.
+This module defines the Resource entity, which represents assets or resources utilized by agents or projects.
 """
 
 from pydantic import BaseModel, Field

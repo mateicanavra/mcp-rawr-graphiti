@@ -1,4 +1,4 @@
-"""Procedure entity type for Graphiti MCP Server."""
+"""Procedure entity for Graphiti MCP Server."""
 
 from pydantic import BaseModel, Field
 

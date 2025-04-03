@@ -32,20 +32,20 @@ from graphiti_core.search.search_config_recipes import (
 )
 from graphiti_core.search.search_filters import SearchFilters
 from graphiti_core.utils.maintenance.graph_data_operations import clear_data
-from entities import get_entity_types, get_entity_type_subset, register_entity_type
+from entities import get_entities, get_entity_subset, register_entity
 from constants import DEFAULT_LOG_LEVEL, DEFAULT_LLM_MODEL, ENV_GRAPHITI_LOG_LEVEL
 
 load_dotenv()
 
-# The ENTITY_TYPES dictionary is managed by the registry in mcp_server.entities
+# The ENTITIES dictionary is managed by the registry in mcp_server.entities
 # NOTE: This global reference is only used for predefined entity subsets below.
-# For the latest entity types, always use get_entity_types() directly.
-ENTITY_TYPES = get_entity_types()
+# For the latest entities, always use get_entities() directly.
+ENTITIES = get_entities()
 
-# Predefined entity type sets for different use cases
-REQUIREMENT_ONLY_ENTITY_TYPES = get_entity_type_subset(['Requirement'])
-PREFERENCE_ONLY_ENTITY_TYPES = get_entity_type_subset(['Preference'])
-PROCEDURE_ONLY_ENTITY_TYPES = get_entity_type_subset(['Procedure'])
+# Predefined entity sets for different use cases
+REQUIREMENT_ONLY_ENTITIES = get_entity_subset(['Requirement'])
+PREFERENCE_ONLY_ENTITIES = get_entity_subset(['Preference'])
+PROCEDURE_ONLY_ENTITIES = get_entity_subset(['Procedure'])
 
 
 # Type definitions for API responses
@@ -104,7 +104,7 @@ class GraphitiConfig(BaseModel):
     model_name: Optional[str] = None
     group_id: Optional[str] = None
     use_custom_entities: bool = False
-    entity_type_subset: Optional[list[str]] = None
+    entity_subset: Optional[list[str]] = None
 
     @classmethod
     def from_env(cls) -> 'GraphitiConfig':
@@ -314,7 +314,7 @@ async def add_episode(
     format: str = 'text', # 'text', 'json', or 'message'
     source_description: str = '',
     uuid: Optional[str] = None,
-    entity_type_subset: Optional[list[str]] = None,
+    entity_subset: Optional[list[str]] = None,
 ) -> Union[SuccessResponse, ErrorResponse]:
     """(Revised Input) Add an episode to the Graphiti knowledge graph.
 
@@ -329,7 +329,7 @@ async def add_episode(
         format (str, optional): How to interpret episode_body ('text', 'json', 'message'). Defaults to 'text'.
         source_description (str, optional): Description of the source.
         uuid (str, optional): Optional UUID for the episode.
-        entity_type_subset (list[str], optional): Optional list of entity type names to use.
+        entity_subset (list[str], optional): Optional list of entity names to use.
     """
     # ---> Logging <---
     logger.debug(f"Entered add_episode for '{name}' with format '{format}'")
@@ -383,28 +383,28 @@ async def add_episode(
                         # Alternatively, uncomment the next line to stop processing on bad JSON:
                         # raise ValueError(f"Invalid JSON provided for format='json': {json_err}") from json_err
                 
-                # (Entity type determination logic remains the same as previous version)
+                # (Entity determination logic remains the same as previous version)
                 # Import here to ensure we get the most up-to-date entity registry
-                from entities import get_entity_types, get_entity_type_subset
+                from entities import get_entities, get_entity_subset
                 
                 logger.info(f"Configuration settings - use_custom_entities: {config.use_custom_entities}, "
-                           f"entity_type_subset param: {entity_type_subset}, "
-                           f"config.entity_type_subset: {config.entity_type_subset}")
+                           f"entity_subset param: {entity_subset}, "
+                           f"config.entity_subset: {config.entity_subset}")
                 
                 if not config.use_custom_entities:
-                    entity_types_to_use = {}
-                    logger.info("Custom entities disabled, using empty entity type dictionary")
-                elif entity_type_subset:
-                    entity_types_to_use = get_entity_type_subset(entity_type_subset)
-                    logger.info(f"Using function parameter entity subset: {entity_type_subset}")
-                elif config.entity_type_subset:
-                    entity_types_to_use = get_entity_type_subset(config.entity_type_subset)
-                    logger.info(f"Using command-line entity subset: {config.entity_type_subset}")
+                    entities_to_use = {}
+                    logger.info("Custom entities disabled, using empty entity dictionary")
+                elif entity_subset:
+                    entities_to_use = get_entity_subset(entity_subset)
+                    logger.info(f"Using function parameter entity subset: {entity_subset}")
+                elif config.entity_subset:
+                    entities_to_use = get_entity_subset(config.entity_subset)
+                    logger.info(f"Using command-line entity subset: {config.entity_subset}")
                 else:
-                    entity_types_to_use = get_entity_types()
-                    logger.info(f"Using all registered entity types: {list(entity_types_to_use.keys())}")
+                    entities_to_use = get_entities()
+                    logger.info(f"Using all registered entities: {list(entities_to_use.keys())}")
                 
-                logger.info(f"Final entity types being used: {list(entity_types_to_use.keys())}")
+                logger.info(f"Final entities being used: {list(entities_to_use.keys())}")
 
                 # Call the core library function
                 # IMPORTANT: Pass episode_body_str for now, even if format='json',
@@ -417,7 +417,7 @@ async def add_episode(
                     group_id=group_id_str,
                     uuid=uuid,
                     reference_time=datetime.now(timezone.utc),
-                    entities=entity_types_to_use,
+                    entity_types=entities_to_use,
                 )
                 logger.info(f"Episode '{name}' added successfully to graph")
 
@@ -457,107 +457,6 @@ async def add_episode(
         return {'error': f'Error queuing episode task: {error_msg}'}
 
 
-@mcp.tool()
-async def add_episode_test(
-    name: str,
-    episode_body: str,
-    group_id: Optional[str] = None,
-    source_description: str = '',
-    uuid: Optional[str] = None,
-) -> Union[SuccessResponse, ErrorResponse]:
-    """(Simplified for Testing) Add an episode to the Graphiti knowledge graph.
-
-    This version processes the episode synchronously for debugging.
-
-    Args:
-        name (str): Name of the episode
-        episode_body (str): The text content of the episode.
-        group_id (str, optional): A unique ID for this graph. If not provided, uses the default group_id from CLI
-                                 or a generated one.
-        source_description (str, optional): Description of the source
-        uuid (str, optional): Optional UUID for the episode
-    """
-    logger.debug(f"Entered add_episode_test (simplified) for '{name}'")
-    global graphiti_client, episode_queues, queue_workers
-
-    if graphiti_client is None:
-        return {'error': 'Graphiti client not initialized'}
-
-    try:
-        # Map string source to EpisodeType enum - Simplified: Assume text
-        source_type = EpisodeType.text
-        logger.debug(f"Using fixed source_type: {source_type}")
-
-        # Use the provided group_id or fall back to the default from config
-        effective_group_id = group_id if group_id is not None else config.group_id
-
-        # Cast group_id to str to satisfy type checker
-        group_id_str = str(effective_group_id) if effective_group_id is not None else ''
-        logger.debug(f"Effective group_id: {group_id_str}")
-
-        assert graphiti_client is not None, 'graphiti_client should not be None here'
-        client = cast(Graphiti, graphiti_client)
-
-        # Simplified: Directly use the string input
-        episode_body_str = episode_body
-        logger.debug(f"Using provided episode_body string (length: {len(episode_body_str)})")
-
-        # Define the episode processing function
-        async def process_episode():
-            logger.info(f"[Sync Task - {group_id_str}] Starting processing for episode '{name}'") # Changed log prefix
-            try:
-                # Import here to ensure we get the most up-to-date entity registry
-                from entities import get_entity_types # Keep get_entity_types import
-
-                # SIMPLIFIED: Determine entity types based only on config flag
-                if config.use_custom_entities:
-                    entity_types_to_use = get_entity_types() # Use all registered types
-                    logger.info(f"Using ALL registered entity types ({len(entity_types_to_use)} types)")
-                else:
-                    entity_types_to_use = {} # Use no custom types
-                    logger.info("Custom entities disabled by config, using empty entity type dictionary")
-                
-                logger.info(f"Final entity types being used: {list(entity_types_to_use.keys())}")
-
-                await client.add_episode(
-                    name=name,
-                    episode_body=episode_body_str, # Use the validated string
-                    source=source_type, # Use simplified source type
-                    source_description=source_description,
-                    group_id=group_id_str,
-                    uuid=uuid,
-                    reference_time=datetime.now(timezone.utc),
-                    entities=entity_types_to_use, # Pass the simplified set
-                )
-                logger.info(f"Episode '{name}' added successfully to graph")
-
-                logger.info(f"Building communities after episode '{name}'")
-                await client.build_communities()
-
-                logger.info(f"[Sync Task - {group_id_str}] Successfully processed episode '{name}'") # Changed log prefix
-            except Exception as e:
-                error_msg = str(e)
-                logger.error(
-                    f"[Sync Task - {group_id_str}] Error processing episode '{name}': {error_msg}" # Changed log prefix
-                )
-                # Re-raise the exception so the main function catches it for the sync case
-                raise
-
-        # --- TEMPORARY SYNC EXECUTION START ---
-        # Execute synchronously for debugging.
-        logger.debug(f"Executing process_episode synchronously for episode '{name}'")
-        await process_episode() # Direct await
-        logger.debug(f"Synchronous process_episode finished for episode '{name}'")
-        # Return a success message indicating synchronous completion
-        return {'message': f"Episode '{name}' processed synchronously."}
-        # --- TEMPORARY SYNC EXECUTION END ---
-
-    except Exception as e:
-        error_msg = str(e)
-        # Log the error originating from the synchronous call or initial setup
-        logger.error(f'Error in add_episode_test tool function (sync execution): {error_msg}')
-        # Return an error response to the client
-        return {'error': f'Error processing episode synchronously: {error_msg}'}
 
 
 @mcp.tool()
@@ -571,14 +470,14 @@ async def search_nodes(
     """Search the Graphiti knowledge graph for relevant node summaries.
     These contain a summary of all of a node's relationships with other nodes.
 
-    Note: entity is a single entity type to filter results (permitted: "Preference", "Procedure").
+    Note: entity is a single entity to filter results (permitted: "Preference", "Procedure").
 
     Args:
         query: The search query
         group_ids: Optional list of group IDs to filter results
         max_nodes: Maximum number of nodes to return (default: 10)
         center_node_uuid: Optional UUID of a node to center the search around
-        entity: Optional single entity type to filter results (permitted: "Preference", "Procedure")
+        entity: Optional single entity to filter results (permitted: "Preference", "Procedure")
     """
     global graphiti_client
 
@@ -929,19 +828,19 @@ async def initialize_server() -> MCPConfig:
     parser.add_argument(
         '--use-custom-entities',
         action='store_true',
-        help='Enable entity extraction using the predefined ENTITY_TYPES',
+        help='Enable entity extraction using the predefined ENTITIES',
     )
-    # Add argument for specifying entity types
+    # Add argument for specifying entities
     parser.add_argument(
-        '--entity-types',
+        '--entities',
         nargs='+',
-        help='Specify which entity types to use (e.g., --entity-types Requirement Preference). '
-        'If not provided but --use-custom-entities is set, all registered entity types will be used.',
+        help='Specify which entities to use (e.g., --entities Requirement Preference). '
+        'If not provided but --use-custom-entities is set, all registered entities will be used.',
     )
-    # Add argument for custom entity type directory
+    # Add argument for custom entity directory
     parser.add_argument(
-        '--entity-type-dir',
-        help='Directory containing custom entity type modules to load'
+        '--entities-dir',
+        help='Directory containing custom entity modules to load'
     )
     # Add argument for log level
     parser.add_argument(
@@ -965,50 +864,50 @@ async def initialize_server() -> MCPConfig:
         config.group_id = f'graph_{uuid.uuid4().hex[:8]}'
         logger.info(f'Generated random group_id: {config.group_id}')
 
-    # Define the expected path for base entity types within the container
+    # Define the expected path for base entities within the container
     container_base_entity_dir = "/app/entities/base"
     
-    # Always load base entity types first
+    # Always load base entities first
     if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):
-        logger.info(f'Loading base entity types from: {container_base_entity_dir}')
-        load_entity_types_from_directory(container_base_entity_dir)
+        logger.info(f'Loading base entities from: {container_base_entity_dir}')
+        load_entities_from_directory(container_base_entity_dir)
     else:
-        logger.warning(f"Base entity types directory not found at: {container_base_entity_dir}")
+        logger.warning(f"Base entities directory not found at: {container_base_entity_dir}")
     
-    # Load project-specific entity types if directory is specified and different from base
-    if args.entity_type_dir:
+    # Load project-specific entities if directory is specified and different from base
+    if args.entities_dir:
         # Resolve paths to handle potential symlinks or relative paths inside container
-        abs_project_dir = os.path.abspath(args.entity_type_dir)
+        abs_project_dir = os.path.abspath(args.entities_dir)
         abs_base_dir = os.path.abspath(container_base_entity_dir)
         
         if abs_project_dir != abs_base_dir:
             if os.path.exists(abs_project_dir) and os.path.isdir(abs_project_dir):
-                logger.info(f'Loading project-specific entity types from: {abs_project_dir}')
-                load_entity_types_from_directory(abs_project_dir)
+                logger.info(f'Loading project-specific entities from: {abs_project_dir}')
+                load_entities_from_directory(abs_project_dir)
             else:
-                logger.warning(f"Project entity types directory not found or not a directory: {abs_project_dir}")
+                logger.warning(f"Project entities directory not found or not a directory: {abs_project_dir}")
         else:
-            logger.info(f"Project entity directory '{args.entity_type_dir}' is the same as base, skipping redundant load.")
+            logger.info(f"Project entity directory '{args.entities_dir}' is the same as base, skipping redundant load.")
 
     # Set use_custom_entities flag if specified
     if args.use_custom_entities:
         config.use_custom_entities = True
-        logger.info('Entity extraction enabled using predefined ENTITY_TYPES')
+        logger.info('Entity extraction enabled using predefined ENTITIES')
     else:
         logger.info('Entity extraction disabled (no custom entities will be used)')
         
-    # Store the entity types to use if specified
+    # Store the entities to use if specified
     if args.entities:
-        config.entity_type_subset = args.entities
-        logger.info(f'Using entity types: {", ".join(args.entities)}')
+        config.entity_subset = args.entities
+        logger.info(f'Using entities: {", ".join(args.entities)}')
     else:
-        config.entity_type_subset = None
+        config.entity_subset = None
         if config.use_custom_entities:
-            logger.info('Using all registered entity types')
+            logger.info('Using all registered entities')
         
-    # Log all registered entity types after initialization
-    logger.info(f"All registered entity types after initialization: {len(get_entity_types())}")
-    for entity_name in get_entity_types().keys():
+    # Log all registered entities after initialization
+    logger.info(f"All registered entities after initialization: {len(get_entities())}")
+    for entity_name in get_entities().keys():
         logger.info(f"  - Available entity: {entity_name}")
 
     llm_client = None
@@ -1054,20 +953,20 @@ def main():
         raise
 
 
-def load_entity_types_from_directory(directory_path: str) -> None:
-    """Load all Python modules in the specified directory as entity types.
+def load_entities_from_directory(directory_path: str) -> None:
+    """Load all Python modules in the specified directory as entities.
     
     This function dynamically imports all Python files in the specified directory,
     and automatically registers any Pydantic BaseModel classes that have docstrings.
-    No explicit imports or registration calls are needed in the entity type files.
+    No explicit imports or registration calls are needed in the entity files.
     
     Args:
-        directory_path: Path to the directory containing entity type modules
+        directory_path: Path to the directory containing entity modules
     """
     logger.info(f"Attempting to load entities from directory: {directory_path}")
     directory = Path(directory_path)
     if not directory.exists() or not directory.is_dir():
-        logger.warning(f"Entity types directory {directory_path} does not exist or is not a directory")
+        logger.warning(f"Entities directory {directory_path} does not exist or is not a directory")
         return
         
     # Find all Python files in the directory
@@ -1101,18 +1000,18 @@ def load_entity_types_from_directory(directory_path: str) -> None:
                         attribute != BaseModel and
                         attribute.__doc__):  # Only consider classes with docstrings
                         
-                        # Register the entity type
-                        register_entity_type(attribute_name, attribute)
+                        # Register the entity
+                        register_entity(attribute_name, attribute)
                         entities_registered += 1
-                        logger.info(f"Auto-registered entity type: {attribute_name}")
+                        logger.info(f"Auto-registered entity: {attribute_name}")
                 
-                logger.info(f"Successfully loaded entity type module: {module_name} (registered {entities_registered} entities)")
+                logger.info(f"Successfully loaded entity module: {module_name} (registered {entities_registered} entities)")
         except Exception as e:
-            logger.error(f"Error loading entity type module {module_name}: {str(e)}")
+            logger.error(f"Error loading entity module {module_name}: {str(e)}")
     
-    # Log total registered entity types after loading this directory
-    logger.info(f"Total registered entity types after loading {directory_path}: {len(get_entity_types())}")
-    for entity_name in get_entity_types().keys():
+    # Log total registered entities after loading this directory
+    logger.info(f"Total registered entities after loading {directory_path}: {len(get_entities())}")
+    for entity_name in get_entities().keys():
         logger.info(f"  - Registered entity: {entity_name}")
 
 

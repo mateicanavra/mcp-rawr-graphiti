@@ -55,7 +55,7 @@ path/to/your/project/ai/graph/mcp-config.yaml
 PROJECT_CONFIG_YAML = """
 services:
   - id: test-project-1-main
-    entity_dir: entities
+    entities_dir: entities
     port_default: 8001
     group_id: test-project-1-graph
     environment:

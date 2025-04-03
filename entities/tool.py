@@ -1,6 +1,6 @@
-"""Tool entity type for Graphiti MCP Server.
+"""Tool entity for Graphiti MCP Server.
 
-This module defines the Tool entity type, which represents tools used by agents or developers.
+This module defines the Tool entity, which represents tools used by agents or developers.
 """
 
 from pydantic import BaseModel, Field

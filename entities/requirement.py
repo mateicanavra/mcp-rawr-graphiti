@@ -1,6 +1,6 @@
-"""Requirement entity type for Graphiti MCP Server.
+"""Requirement entity for Graphiti MCP Server.
 
-This module defines the Requirement entity type, which represents constraints, conditions, or requirements that must be satisfied.
+This module defines the Requirement entity, which represents constraints, conditions, or requirements that must be satisfied.
 """
 
 from pydantic import BaseModel, Field

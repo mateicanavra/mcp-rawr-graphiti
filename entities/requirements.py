@@ -1,4 +1,4 @@
-"""Requirement entity type for Graphiti MCP Server."""
+"""Requirement entity for Graphiti MCP Server."""
 
 from pydantic import BaseModel, Field
 

@@ -1,10 +1,10 @@
-"""Entity Types package.
+"""Entities package.
 
-This package contains entity type definitions for Graphiti MCP Server.
+This package contains entity definitions for Graphiti MCP Server.
 """
 
 from entities.entity_registry import (
-    register_entity_type,
-    get_entity_types,
-    get_entity_type_subset,
+    register_entity,
+    get_entities,
+    get_entity_subset,
 )

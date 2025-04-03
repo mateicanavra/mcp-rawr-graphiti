@@ -16,7 +16,7 @@ from constants import (
     # Files
     FILE_PYPROJECT_TOML,
     # Directory structure
-    DIR_ENTITY_TYPES,
+    DIR_ENTITIES,
 )
 from ..utils.paths import _validate_repo_path
 
@@ -92,7 +92,7 @@ def _prompt_and_save_repo_path() -> Optional[Path]:
                 print(f"{GREEN}Repository path saved to {get_config_path()}.{NC}")
                 return repo_path
             else:
-                print(f"{RED}Invalid path: '{repo_path}'. Directory must exist and contain '{FILE_PYPROJECT_TOML}', 'graphiti_cli/', and '{DIR_ENTITY_TYPES}/'.{NC}")
+                print(f"{RED}Invalid path: '{repo_path}'. Directory must exist and contain '{FILE_PYPROJECT_TOML}', 'graphiti_cli/', and '{DIR_ENTITIES}/'.{NC}")
                 print(f"{YELLOW}Please ensure you provide the correct absolute path.{NC}")
         except EOFError:
             print(f"\n{RED}Operation cancelled by user.{NC}")

@@ -1,6 +1,6 @@
-"""Agent entity type for Graphiti MCP Server.
+"""Agent entity for Graphiti MCP Server.
 
-This module defines the Agent entity type, which represents an AI agent persona or role.
+This module defines the Agent entity, which represents an AI agent persona or role.
 """
 
 from pydantic import BaseModel, Field
