@@ -5,11 +5,11 @@ This script imports the entities package and checks that all entities are proper
 """
 
 import entities
-from entities import get_entity_types
+from entities import get_entities
 
 if __name__ == "__main__":
-    # Get all registered entity types
-    registered_entities = get_entity_types()
+    # Get all registered entities
+    registered_entities = get_entities()
     
     # Expected entity names
     expected_entities = [

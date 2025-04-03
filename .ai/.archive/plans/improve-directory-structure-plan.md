@@ -1,16 +1,16 @@
-**Objective:** Refactor the `mcp_server` entity type management for improved modularity, auto-discovery, and reusability across projects. Also, establish a robust system for guiding AI agents via Cursor rules.
+**Objective:** Refactor the `mcp_server` entity management for improved modularity, auto-discovery, and reusability across projects. Also, establish a robust system for guiding AI agents via Cursor rules.
 
 **Status: Phase 1 Complete, Phase 1 Cleanup Complete, Phase 2 Complete, Phase 2b Complete, Phase 2c Complete**
 
 **1. Directory Structure & Registry Logic Implementation:**
 
-*   **Goal:** Establish a clear separation between entity type definitions and the registry mechanism.
+*   **Goal:** Establish a clear separation between entity definitions and the registry mechanism.
 *   **Implementation:**
-    *   The core registry logic (state and functions: `register_entity_type`, `get_entity_types`, `get_entity_type_subset`) resides in `mcp_server/entity_registry.py`.
-    *   `mcp_server/entities/` serves as the main package directory for entity type *definitions*.
-    *   `mcp_server/entities/__init__.py` makes the `entities` directory a Python package and re-exports the registry functions from `entity_registry.py`, allowing imports like `from mcp_server.entities import get_entity_types`.
-    *   Specific sets of entity type definitions are organized into subdirectories, e.g., `mcp_server/entities/base/` and `mcp_server/entities/example/`.
-    *   The auto-loader function (`load_entity_types_from_directory` in `graphiti_mcp_server.py`) dynamically imports `.py` files from specified directories (e.g., `entities/base` by default, or paths provided via `--entity-type-dir`), inspects them for valid Pydantic models with docstrings, and registers them using `register_entity_type` (which resolves to the function in `entity_registry.py`).
+    *   The core registry logic (state and functions: `register_entity`, `get_entities`, `get_entity_subset`) resides in `mcp_server/entity_registry.py`.
+    *   `mcp_server/entities/` serves as the main package directory for entity *definitions*.
+    *   `mcp_server/entities/__init__.py` makes the `entities` directory a Python package and re-exports the registry functions from `entity_registry.py`, allowing imports like `from mcp_server.entities import get_entities`.
+    *   Specific sets of entity definitions are organized into subdirectories, e.g., `mcp_server/entities/base/` and `mcp_server/entities/example/`.
+    *   The auto-loader function (`load_entities_from_directory` in `graphiti_mcp_server.py`) dynamically imports `.py` files from specified directories (e.g., `entities/base` by default, or paths provided via `--entities-dir`), inspects them for valid Pydantic models with docstrings, and registers them using `register_entity` (which resolves to the function in `entity_registry.py`).
 *   **Outcome:** The structure aligns with the initial plan, achieving the desired separation of concerns.
 
 **2. Phase 1 Cleanup: COMPLETED ✓**
@@ -26,7 +26,7 @@ The following refinements have been implemented for enhanced clarity and adheren
 
 **3. Phase 2 - `graphiti` Dev Symlinking Script: COMPLETED ✓**
 
-*   **Objective:** Create a globally executable shell script (`graphiti`) to facilitate the reuse of entity type definitions and the Docker Compose configuration in other projects by creating symlinks for **development purposes**.
+*   **Objective:** Create a globally executable shell script (`graphiti`) to facilitate the reuse of entity definitions and the Docker Compose configuration in other projects by creating symlinks for **development purposes**.
 *   **Implementation:**
     *   **Script Creation:** Created the `graphiti` shell script in `mcp_server/scripts/` directory.
     *   **Command:** Implemented the `link-dev-files [DIR]` command (and made it the default if no command is given).
@@ -71,15 +71,15 @@ The following refinements have been implemented for enhanced clarity and adheren
 
 **5. Plan for Testing Auto-Loading via Docker Compose (Phase 3 - NEXT):**
 
-*   **Objective:** Verify that the `--entity-type-dir` argument correctly limits the auto-loading scope when running services via Docker Compose.
+*   **Objective:** Verify that the `--entities-dir` argument correctly limits the auto-loading scope when running services via Docker Compose.
 *   **Prerequisites:** Phase 1 Cleanup complete.
 *   **Implementation Steps:**
     *   Modify the `command` section of services in `mcp_server/docker-compose.yml`.
-    *   **Test Case 1 (Base Only):** For one service (e.g., `graphiti-magic-api`), ensure the command includes `--use-custom-entities` but *only* specifies the base directory: `"--entity-type-dir", "mcp_server/entities/base"`.
-    *   **Test Case 2 (Example Only):** For another service (e.g., `graphiti-civ7`), modify the command to load *only* the example types: `"--entity-type-dir", "mcp_server/entities/example"`.
-    *   **Test Case 3 (Specific Subset via CLI - Optional):** Explore using the `--entity-types` argument.
+    *   **Test Case 1 (Base Only):** For one service (e.g., `graphiti-magic-api`), ensure the command includes `--use-custom-entities` but *only* specifies the base directory: `"--entities-dir", "mcp_server/entities/base"`.
+    *   **Test Case 2 (Example Only):** For another service (e.g., `graphiti-civ7`), modify the command to load *only* the example types: `"--entities-dir", "mcp_server/entities/example"`.
+    *   **Test Case 3 (Specific Subset via CLI - Optional):** Explore using the `--entities` argument.
     *   **Execution:** Run `docker compose down && docker compose up --build --force-recreate`.
-    *   **Verification:** Examine service logs (`docker compose logs <service_name>`) to confirm correct entity types are loaded per service based on the `--entity-type-dir` argument.
+    *   **Verification:** Examine service logs (`docker compose logs <service_name>`) to confirm correct entities are loaded per service based on the `--entities-dir` argument.
 
 **Next Steps:**
 

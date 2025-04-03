@@ -1,6 +1,6 @@
-"""Feedback entity type for Graphiti MCP Server.
+"""Feedback entity for Graphiti MCP Server.
 
-This module defines the Feedback entity type, which represents user feedback on actions or recommendations.
+This module defines the Feedback entity, which represents user feedback on actions or recommendations.
 """
 
 from pydantic import BaseModel, Field

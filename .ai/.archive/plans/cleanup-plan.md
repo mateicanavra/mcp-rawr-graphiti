@@ -85,7 +85,7 @@ This repository contains the Graphiti Model Context Protocol (MCP) Server and it
 
 *   Exposes Graphiti functionality via MCP (SSE or Stdio transport).
 *   Provides tools for adding/searching episodes, nodes, and facts in a knowledge graph.
-*   Supports custom entity type definitions for tailored extraction.
+*   Supports custom entity definitions for tailored extraction.
 *   Includes a CLI (`graphiti`) for project initialization, entity management, and Docker environment control.
 *   Uses Docker Compose for easy deployment of the MCP server(s) and Neo4j database.
 *   Leverages `uv` for fast dependency management.
@@ -214,7 +214,7 @@ The `graphiti` CLI helps manage projects and the Docker environment. Run `graphi
     # Ensure .env is loaded or variables are exported
     # Activate venv: source .venv/bin/activate
     uv run graphiti_mcp_server.py --transport sse --group-id my-test-group --log-level debug
-    # Add other flags like --use-custom-entities, --entity-type-dir as needed
+    # Add other flags like --use-custom-entities, --entities-dir as needed
     ```
 
 ## ⚠️ DANGER ZONE: Clearing the Database ⚠️

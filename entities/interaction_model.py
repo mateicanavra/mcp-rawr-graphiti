@@ -1,6 +1,6 @@
-"""InteractionModel entity type for Graphiti MCP Server.
+"""InteractionModel entity for Graphiti MCP Server.
 
-This module defines the InteractionModel entity type, which describes structured interaction patterns.
+This module defines the InteractionModel entity, which describes structured interaction patterns.
 """
 
 from pydantic import BaseModel, Field

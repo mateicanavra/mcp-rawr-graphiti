@@ -126,7 +126,7 @@ We'll aim for a clean, maintainable Python CLI tool using **Typer** for the inte
 
     @app.command()
     def entity(
-        set_name: Annotated[str, typer.Argument(help="Name for the new entity type set (e.g., 'my-entities').")],
+        set_name: Annotated[str, typer.Argument(help="Name for the new entity set (e.g., 'my-entities').")],
         target_dir: Annotated[Path, typer.Argument(
             ".",
             help="Target project root directory containing ai/graph/mcp-config.yaml.",
@@ -137,7 +137,7 @@ We'll aim for a clean, maintainable Python CLI tool using **Typer** for the inte
         )] = Path(".")
     ):
         """
-        Create a new entity type set directory and template file within a project's ai/graph/entities directory. 📄
+        Create a new entity set directory and template file within a project's ai/graph/entities directory. 📄
         """
         commands.create_entity_set(set_name, target_dir)
 
@@ -411,10 +411,10 @@ We'll aim for a clean, maintainable Python CLI tool using **Typer** for the inte
                     continue
 
                 server_id = server_conf.get('id')
-                entity_type_dir = server_conf.get('entity_dir') # Relative path within project
+                entities_dir = server_conf.get('entities_dir') # Relative path within project
 
-                if not server_id or not entity_type_dir:
-                    print(f"Warning: Skipping service in '{project_name}' due to missing 'id' or 'entity_dir': {server_conf}")
+                if not server_id or not entities_dir:
+                    print(f"Warning: Skipping service in '{project_name}' due to missing 'id' or 'entities_dir': {server_conf}")
                     continue
 
                 # --- Determine Service Configuration ---
@@ -438,13 +438,13 @@ We'll aim for a clean, maintainable Python CLI tool using **Typer** for the inte
                 env_vars['MCP_USE_CUSTOM_ENTITIES'] = 'true' # Assume true if defined here
 
                 # Calculate absolute host path for entity volume mount
-                abs_host_entity_path = (project_root_dir / entity_type_dir).resolve()
+                abs_host_entity_path = (project_root_dir / entities_dir).resolve()
                 if not abs_host_entity_path.is_dir():
                      print(f"Warning: Entity directory '{abs_host_entity_path}' for service '{service_name}' does not exist. Volume mount might fail.")
                      # Continue anyway, Docker will create an empty dir inside container if host path doesn't exist
 
                 # Set container path for entity directory env var
-                env_vars['MCP_ENTITY_TYPE_DIR'] = CONTAINER_ENTITY_PATH
+                env_vars['MCP_ENTITIES_DIR'] = CONTAINER_ENTITY_PATH
 
                 # Add project-specific environment variables from mcp-config.yaml
                 project_environment = server_conf.get('environment', {})
@@ -580,7 +580,7 @@ We'll aim for a clean, maintainable Python CLI tool using **Typer** for the inte
     services:
       - id: {project_name}-main  # Service ID (used for default naming) # container_name: "custom-name" # Optional: Specify custom container name # port_default: 8001 # Optional: Specify custom host port
         group_id: "{project_name}"  # Graph group ID
-        entity_dir: "entities"  # Relative path to entity definitions within ai/graph # environment: # Optional: Add non-secret env vars here # MY_FLAG: "true"
+        entities_dir: "entities"  # Relative path to entity definitions within ai/graph # environment: # Optional: Add non-secret env vars here # MY_FLAG: "true"
     """
     try:
     target_dir.mkdir(parents=True, exist_ok=True) # Ensure target dir exists
@@ -742,19 +742,19 @@ We'll aim for a clean, maintainable Python CLI tool using **Typer** for the inte
                 sys.exit(1)
 
             # Extract the entity directory name from the first service entry
-            entity_dir_name = project_config.get('services', [{}])[0].get('entity_dir', 'entities')
+            entity_dir_name = project_config.get('services', [{}])[0].get('entities_dir', 'entities')
 
             # Calculate paths - use graph_dir as base
             project_entity_base_dir = graph_dir / entity_dir_name
             new_set_dir = project_entity_base_dir / set_name
 
             if new_set_dir.exists():
-                print(f"{core.RED}Error: Entity type set '{set_name}' already exists at: {new_set_dir}{core.NC}")
+                print(f"{core.RED}Error: Entity set '{set_name}' already exists at: {new_set_dir}{core.NC}")
                 sys.exit(1)
 
             try:
                 new_set_dir.mkdir(parents=True)
-                print(f"Created entity type set directory: {core.CYAN}{new_set_dir}{core.NC}")
+                print(f"Created entity set directory: {core.CYAN}{new_set_dir}{core.NC}")
 
                 class_name = _to_pascal_case(set_name) + "Entity" # Add suffix convention
                 # Use set_name for lowercase replacements, class_name for class definition

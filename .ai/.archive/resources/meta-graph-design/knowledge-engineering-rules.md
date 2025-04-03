@@ -45,7 +45,7 @@ Quickly re-familiarize yourself by reviewing these resources in sequence:
 
 When introducing new entities:
 - **Validate Need:** Use the Entity Design Guidelines rigorously to avoid unnecessary entity creation.
-- **Identify Entity Type:** Clearly place the entity in the correct semantic category (actions, constraints, interaction, connectors, or resources).
+- **Identify Entity:** Clearly place the entity in the correct semantic category (actions, constraints, interaction, connectors, or resources).
 - **Design Entity:** Explicitly define each entity using the established Pydantic template:
 		- Entity name, purpose, and clear semantic category.
 		- Properties clearly justified by entity guidelines (avoid property explosion).

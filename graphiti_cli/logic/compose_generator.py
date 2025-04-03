@@ -22,8 +22,8 @@ from constants import (
     # Directory structure
     DIR_AI, DIR_GRAPH, DIR_ENTITIES, 
     # Environment variables
-    ENV_MCP_GROUP_ID, ENV_MCP_USE_CUSTOM_ENTITIES, ENV_MCP_USE_CUSTOM_ENTITIES_VALUE, ENV_MCP_ENTITY_TYPE_DIR,
-    ENV_MCP_ENTITY_TYPES,
+    ENV_MCP_GROUP_ID, ENV_MCP_USE_CUSTOM_ENTITIES, ENV_MCP_USE_CUSTOM_ENTITIES_VALUE, ENV_MCP_ENTITIES_DIR,
+    ENV_MCP_ENTITIES,
     # File and path constants
     BASE_COMPOSE_FILENAME, PROJECTS_REGISTRY_FILENAME, DOCKER_COMPOSE_OUTPUT_FILENAME,
     # Project container path
@@ -34,7 +34,7 @@ from constants import (
     COMPOSE_SERVICES_KEY, COMPOSE_CUSTOM_BASE_ANCHOR_KEY, COMPOSE_CONTAINER_NAME_KEY,
     COMPOSE_PORTS_KEY, COMPOSE_ENVIRONMENT_KEY, COMPOSE_VOLUMES_KEY,
     # Project config keys
-    PROJECT_SERVICES_KEY, PROJECT_SERVER_ID_KEY, PROJECT_ENTITY_DIR_KEY, 
+    PROJECT_SERVICES_KEY, PROJECT_SERVER_ID_KEY, PROJECT_ENTITIES_DIR_KEY, 
     PROJECT_CONTAINER_NAME_KEY, PROJECT_PORT_DEFAULT_KEY, PROJECT_GROUP_ID_KEY, PROJECT_ENVIRONMENT_KEY,
     # Configuration keys
     CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG,
@@ -127,10 +127,10 @@ def generate_compose_logic(
                 continue
 
             server_id = server_conf.get(PROJECT_SERVER_ID_KEY)
-            entity_type_dir = server_conf.get(PROJECT_ENTITY_DIR_KEY)  # Relative path within project
+            entities_dir = server_conf.get(PROJECT_ENTITIES_DIR_KEY)  # Relative path within project
 
-            if not server_id or not entity_type_dir:
-                print(f"Warning: Skipping service in '{project_name}' due to missing '{PROJECT_SERVER_ID_KEY}' or '{PROJECT_ENTITY_DIR_KEY}': {server_conf}")
+            if not server_id or not entities_dir:
+                print(f"Warning: Skipping service in '{project_name}' due to missing '{PROJECT_SERVER_ID_KEY}' or '{PROJECT_ENTITIES_DIR_KEY}': {server_conf}")
                 continue
 
             # --- Determine Service Configuration ---
@@ -165,34 +165,34 @@ def generate_compose_logic(
             env_vars[ENV_MCP_USE_CUSTOM_ENTITIES] = ENV_MCP_USE_CUSTOM_ENTITIES_VALUE # Default to True
 
             # Calculate absolute host path for entity volume mount
-            abs_host_entity_path = (project_root_dir / DIR_AI / DIR_GRAPH / entity_type_dir).resolve()
+            abs_host_entity_path = (project_root_dir / DIR_AI / DIR_GRAPH / entities_dir).resolve()
             if not abs_host_entity_path.is_dir():
                 print(f"Warning: Entity directory '{abs_host_entity_path}' for service '{service_name}' does not exist. Volume mount might fail.")
                 # Continue anyway, Docker will create an empty dir inside container if host path doesn't exist
 
             # Set container path for entity directory env var
             # This is the fixed path *inside* the container where the host directory (abs_host_entity_path) is mounted.
-            env_vars[ENV_MCP_ENTITY_TYPE_DIR] = PROJECT_CONTAINER_ENTITY_PATH
+            env_vars[ENV_MCP_ENTITIES_DIR] = PROJECT_CONTAINER_ENTITY_PATH
 
             # Add project-specific environment variables from mcp-config.yaml
             # This allows overriding the default MCP_USE_CUSTOM_ENTITIES=true if set to "false" in the config,
-            # and handles MCP_ENTITY_TYPES (setting to "" if not present)
+            # and handles MCP_ENTITIES (setting to "" if not present)
             project_environment = server_conf.get(PROJECT_ENVIRONMENT_KEY, {})
             if isinstance(project_environment, dict):
-                # Check if MCP_ENTITY_TYPES is already defined in the project config
-                if ENV_MCP_ENTITY_TYPES not in project_environment:
+                # Check if MCP_ENTITIES is already defined in the project config
+                if ENV_MCP_ENTITIES not in project_environment:
                     # If not defined, set it to empty string by default
                     # This prevents accidental overrides from .env and triggers default behavior in entrypoint.sh
-                    env_vars[ENV_MCP_ENTITY_TYPES] = ""
+                    env_vars[ENV_MCP_ENTITIES] = ""
                 # Merge project-specific environment variables AFTER setting the default
                 env_vars.update(project_environment)
             else:
                 print(f"Warning: Invalid '{PROJECT_ENVIRONMENT_KEY}' section for service '{service_name}' in '{project_config_path}'. Expected a dictionary.")
             
-            # If MCP_ENTITY_TYPES was NOT in project_environment, but we haven't set it yet (e.g., project_environment was empty)
+            # If MCP_ENTITIES was NOT in project_environment, but we haven't set it yet (e.g., project_environment was empty)
             # ensure it's set to empty string.
-            if ENV_MCP_ENTITY_TYPES not in env_vars:
-                 env_vars[ENV_MCP_ENTITY_TYPES] = ""
+            if ENV_MCP_ENTITIES not in env_vars:
+                 env_vars[ENV_MCP_ENTITIES] = ""
 
             new_service[COMPOSE_ENVIRONMENT_KEY] = env_vars
 

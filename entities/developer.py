@@ -1,6 +1,6 @@
-"""Developer entity type for Graphiti MCP Server.
+"""Developer entity for Graphiti MCP Server.
 
-This module defines the Developer entity type, which represents developer-specific working style and context.
+This module defines the Developer entity, which represents developer-specific working style and context.
 """
 
 from pydantic import BaseModel, Field

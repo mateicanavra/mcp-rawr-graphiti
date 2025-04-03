@@ -63,7 +63,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 *   **Actions:**
     1.  Define `CONTAINER_ENTITY_PATH = "/app/project_entities"` near constants (@LINE:13).
     2.  Inside the *inner* service loop (after getting `server_conf`):
-        *   Get `relative_entity_dir = server_conf.get('entity_dir')`. Add validation (log warning/skip service if missing).
+        *   Get `relative_entity_dir = server_conf.get('entities_dir')`. Add validation (log warning/skip service if missing).
         *   Get `project_root_dir = project_data.get('root_dir')`. Add validation (log warning/skip project if missing).
         *   Calculate `abs_host_entity_path = os.path.abspath(os.path.join(project_root_dir, relative_entity_dir))`.
         *   Ensure the `new_service` map (created via `CommentedMap()`) has a `volumes` key initialized as an empty list if it doesn't exist.
@@ -74,18 +74,18 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 
 **Step 1.4: Enhance Generator (`generate_compose.py`) - Update Environment Variables** [COMPLETED]
 
-*   **Objective:** Set `MCP_ENTITY_TYPE_DIR` correctly and merge project-specific environment variables.
+*   **Objective:** Set `MCP_ENTITIES_DIR` correctly and merge project-specific environment variables.
 *   **File:** `mcp-server/generate_compose.py`
 *   **Actions:**
     1.  Inside the inner service loop, locate the `env_vars = CommentedMap()` creation (@LINE:110).
-    2.  Modify the setting of `MCP_ENTITY_TYPE_DIR` (@LINE:115): Set it directly to the container path: `env_vars['MCP_ENTITY_TYPE_DIR'] = CONTAINER_ENTITY_PATH`.
-    3.  Remove the `if entities is not None:` block (@LINE:117-@LINE:121) if the `types` key in project config is no longer supported (confirm this - current `custom_servers.yaml` uses it @LINE:17). *If `types` is still needed*, ensure `MCP_ENTITY_TYPES` is added correctly to `env_vars`. **Plan Decision:** Let's assume `types` is deprecated for V1 simplicity; remove the block.
+    2.  Modify the setting of `MCP_ENTITIES_DIR` (@LINE:115): Set it directly to the container path: `env_vars['MCP_ENTITIES_DIR'] = CONTAINER_ENTITY_PATH`.
+    3.  Remove the `if entities is not None:` block (@LINE:117-@LINE:121) if the `types` key in project config is no longer supported (confirm this - current `custom_servers.yaml` uses it @LINE:17). *If `types` is still needed*, ensure `MCP_ENTITIES` is added correctly to `env_vars`. **Plan Decision:** Let's assume `types` is deprecated for V1 simplicity; remove the block.
     4.  Get the project environment dictionary: `project_environment = server_conf.get('environment', {})`.
     5.  Merge `project_environment` into `env_vars`: `env_vars.update(project_environment)`. This ensures project-specific vars are added. *Note: `ruamel.yaml`'s `CommentedMap` update preserves order and comments if possible.*
 *   **Acceptance Criteria:**
-    *   The `MCP_ENTITY_TYPE_DIR` environment variable in generated services is set to `/app/project_entities`.
+    *   The `MCP_ENTITIES_DIR` environment variable in generated services is set to `/app/project_entities`.
     *   Any key-value pairs defined under the `environment:` key in the project's `mcp-config.yaml` are added to the service's environment definition.
-    *   The logic for the `types` key (and `MCP_ENTITY_TYPES` env var) is removed (or confirmed working if kept).
+    *   The logic for the `types` key (and `MCP_ENTITIES` env var) is removed (or confirmed working if kept).
 
 **Step 1.5: Enhance Generator (`generate_compose.py`) - Update Port/Container Name Logic** [COMPLETED]
 
@@ -117,7 +117,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 
 **Step 1.7: Adapt Server Script (`graphiti_mcp_server.py`) - Entity Loading** [COMPLETED]
 
-*   **Objective:** Enable loading of both base and project-specific entity types.
+*   **Objective:** Enable loading of both base and project-specific entities.
 *   **File:** `mcp-server/graphiti_mcp_server.py`
 *   **Actions:**
     1.  Inside the `initialize_server` function (after `args = parser.parse_args()` approx. @LINE:761):
@@ -125,31 +125,31 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
     3.  Add logic to *always* load base types first:
         ```python
         if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):
-            logger.info(f'Loading base entity types from: {container_base_entity_dir}')
-            load_entity_types_from_directory(container_base_entity_dir)
+            logger.info(f'Loading base entities from: {container_base_entity_dir}')
+            load_entities_from_directory(container_base_entity_dir)
         else:
-            logger.warning(f"Base entity types directory not found at: {container_base_entity_dir}")
+            logger.warning(f"Base entities directory not found at: {container_base_entity_dir}")
         ```
     4.  Add logic to load project-specific types if the directory is provided and different:
         ```python
-        project_entity_dir = args.entity_type_dir # From --entity-type-dir arg
+        project_entity_dir = args.entities_dir # From --entities-dir arg
         if project_entity_dir:
              # Resolve paths to handle potential symlinks or relative paths inside container if needed
              abs_project_dir = os.path.abspath(project_entity_dir)
              abs_base_dir = os.path.abspath(container_base_entity_dir)
              if abs_project_dir != abs_base_dir:
                   if os.path.exists(abs_project_dir) and os.path.isdir(abs_project_dir):
-                      logger.info(f'Loading project-specific entity types from: {abs_project_dir}')
-                      load_entity_types_from_directory(abs_project_dir)
+                      logger.info(f'Loading project-specific entities from: {abs_project_dir}')
+                      load_entities_from_directory(abs_project_dir)
                   else:
-                      logger.warning(f"Project entity types directory not found or not a directory: {abs_project_dir}")
+                      logger.warning(f"Project entities directory not found or not a directory: {abs_project_dir}")
              else:
                   logger.info(f"Project entity directory '{project_entity_dir}' is the same as base, skipping redundant load.")
         ```
-    5.  Ensure `load_entity_types_from_directory` (@LINE:811) handles being called multiple times correctly (the current implementation using a global registry `@LINE:28` should be fine).
+    5.  Ensure `load_entities_from_directory` (@LINE:811) handles being called multiple times correctly (the current implementation using a global registry `@LINE:28` should be fine).
 *   **Acceptance Criteria:**
     *   The server logs attempts to load base entities.
-    *   If a custom service container has a volume mounted at `/app/project_entities` and `MCP_ENTITY_TYPE_DIR` set to that path, the server logs attempts to load entities from that directory as well.
+    *   If a custom service container has a volume mounted at `/app/project_entities` and `MCP_ENTITIES_DIR` set to that path, the server logs attempts to load entities from that directory as well.
     *   The final list of registered entities includes both base and project-specific types.
 
 **Step 1.8: Verify Dockerfile** [COMPLETED]
@@ -158,7 +158,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 *   **File:** `Dockerfile` (provided in clipboard)
 *   **Actions:**
     1.  Verify the line `COPY entities/ ./entities/` (@LINE:21) is present and correctly copies `mcp-server/entities/base` into `/app/entities/base` within the image.
-*   **Acceptance Criteria:** The Docker build process includes the base entity type definitions.
+*   **Acceptance Criteria:** The Docker build process includes the base entity definitions.
 
 ---
 
@@ -195,7 +195,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
             # container_name: "custom-name" # Optional: Specify custom container name
             # port_default: 8001           # Optional: Specify custom host port
             group_id: "$PROJECT_NAME"     # Graph group ID
-            entity_dir: "entities"       # Relative path to entity definitions within project
+            entities_dir: "entities"       # Relative path to entity definitions within project
             # environment:                 # Optional: Add non-secret env vars here
             #   MY_FLAG: "true"
         EOF
@@ -278,7 +278,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
                 port_default: 8051 # Assign a unique, available port
                 container_name: "mcp-test1-service"
                 group_id: "test-project-1"
-                entity_dir: "entities"
+                entities_dir: "entities"
                 environment:
                   TEST_PROJECT_FLAG: "Project1"
             ```
@@ -291,7 +291,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
               - id: test2-aux
                 # Rely on generator defaults for port/name
                 group_id: "test-project-2"
-                entity_dir: "entities"
+                entities_dir: "entities"
                 environment:
                   TEST_PROJECT_FLAG: "Project2"
                   ANOTHER_FLAG: "enabled"
@@ -323,12 +323,12 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
             *   Has `container_name: "mcp-test1-service"`.
             *   Has `ports: ["8051:8000"]` (or correct mapping based on `MCP_ROOT_CONTAINER_PORT`).
             *   Has correct `volumes` mount for `/workspace/test-project-1/entities` to `/app/project_entities`.
-            *   Has `environment` including `MCP_GROUP_ID: "test-project-1"`, `MCP_ENTITY_TYPE_DIR: "/app/project_entities"`, `TEST_PROJECT_FLAG: "Project1"`, and inherited base env vars.
+            *   Has `environment` including `MCP_GROUP_ID: "test-project-1"`, `MCP_ENTITIES_DIR: "/app/project_entities"`, `TEST_PROJECT_FLAG: "Project1"`, and inherited base env vars.
         *   Verify `mcp-test2-aux`:
             *   Has default container name (e.g., `mcp-test2-aux`).
             *   Has default sequential port (e.g., `8002:8000`).
             *   Has correct `volumes` mount for `/workspace/test-project-2/entities`.
-            *   Has `environment` including `MCP_GROUP_ID: "test-project-2"`, `MCP_ENTITY_TYPE_DIR: "/app/project_entities"`, `TEST_PROJECT_FLAG: "Project2"`, `ANOTHER_FLAG: "enabled"`, and inherited base env vars.
+            *   Has `environment` including `MCP_GROUP_ID: "test-project-2"`, `MCP_ENTITIES_DIR: "/app/project_entities"`, `TEST_PROJECT_FLAG: "Project2"`, `ANOTHER_FLAG: "enabled"`, and inherited base env vars.
 *   **Acceptance Criteria:** The generated `docker-compose.yml` accurately reflects the combination of `base-compose.yaml` and the configurations from both registered test projects.
 
 **Step 3.4: Test `graphiti up`/`down`/`restart`** [COMPLETED]

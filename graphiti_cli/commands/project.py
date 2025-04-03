@@ -15,10 +15,10 @@ from constants import (
     # Configuration constants
     CONFIG_FILENAME, ENTITY_FILE_EXTENSION,
     CONFIG_KEY_SERVICES, CONFIG_KEY_ID, CONFIG_KEY_CONTAINER_NAME, 
-    CONFIG_KEY_PORT_DEFAULT, CONFIG_KEY_GROUP_ID, CONFIG_KEY_ENTITY_DIR,
+    CONFIG_KEY_PORT_DEFAULT, CONFIG_KEY_GROUP_ID, CONFIG_KEY_ENTITIES_DIR,
     CONFIG_KEY_ENVIRONMENT, CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG,
     # Default values
-    DEFAULT_CUSTOM_CONTAINER_NAME, DEFAULT_CUSTOM_PORT, DEFAULT_ENTITY_DIR_NAME,
+    DEFAULT_CUSTOM_CONTAINER_NAME, DEFAULT_CUSTOM_PORT, DEFAULT_ENTITIES_DIR_NAME,
     # Environment variables
     ENV_GRAPHITI_LOG_LEVEL,
     # Logging
@@ -82,7 +82,7 @@ def init_project(project_name: str, target_dir: Path):
     # {CONFIG_KEY_CONTAINER_NAME}: "{DEFAULT_CUSTOM_CONTAINER_NAME}"  # Optional: Specify custom container name
     # {CONFIG_KEY_PORT_DEFAULT}: {DEFAULT_CUSTOM_PORT}             # Optional: Specify custom host port
     {CONFIG_KEY_GROUP_ID}: "{project_name}"       # Graph group ID
-    {CONFIG_KEY_ENTITY_DIR}: "{DEFAULT_ENTITY_DIR_NAME}"           # Relative path to entity definitions within ai/graph
+    {CONFIG_KEY_ENTITIES_DIR}: "{DEFAULT_ENTITIES_DIR_NAME}"           # Relative path to entity definitions within ai/graph
     {CONFIG_KEY_ENVIRONMENT}:                     # Optional: Add non-secret env vars here
       {ENV_GRAPHITI_LOG_LEVEL}: "{DEFAULT_LOG_LEVEL_STR}"
     {CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG}: true   # Automatically update .cursor/mcp.json during 'compose'
@@ -241,7 +241,7 @@ def create_entity_set(entity_name: str, target_dir: Path):
     Create a new entity file directly in a project's entities directory.
     
     Args:
-        entity_name (str): Name for the new entity type
+        entity_name (str): Name for the new entity
         target_dir (Path): Target project root directory
     """
     # Validate entity_name format
@@ -268,7 +268,7 @@ def create_entity_set(entity_name: str, target_dir: Path):
         sys.exit(1)
         
     # Extract the entity directory name from the first service entry
-    entity_dir_name = project_config.get(CONFIG_KEY_SERVICES, [{}])[0].get(CONFIG_KEY_ENTITY_DIR, DEFAULT_ENTITY_DIR_NAME)
+    entity_dir_name = project_config.get(CONFIG_KEY_SERVICES, [{}])[0].get(CONFIG_KEY_ENTITIES_DIR, DEFAULT_ENTITIES_DIR_NAME)
     
     # Calculate paths - entities directory directly in graph_dir
     project_entity_dir = graph_dir / entity_dir_name

@@ -26,15 +26,15 @@ if [ "$MCP_USE_CUSTOM_ENTITIES" = "true" ]; then
   CMD_ARGS="$CMD_ARGS --use-custom-entities"
 fi
 
-# --entity-type-dir (Optional path)
-if [ -n "$MCP_ENTITY_TYPE_DIR" ]; then
-  CMD_ARGS="$CMD_ARGS --entity-type-dir $MCP_ENTITY_TYPE_DIR"
+# --entities-dir (Optional path)
+if [ -n "$MCP_ENTITIES_DIR" ]; then
+  CMD_ARGS="$CMD_ARGS --entities-dir $MCP_ENTITIES_DIR"
 fi
 
-# --entity-types (Optional space-separated list)
+# --entities (Optional space-separated list)
 # Assumes the python script handles a space-separated list after the flag.
-if [ -n "$MCP_ENTITY_TYPES" ]; then
-   CMD_ARGS="$CMD_ARGS --entity-types $MCP_ENTITY_TYPES"
+if [ -n "$MCP_ENTITIES" ]; then
+   CMD_ARGS="$CMD_ARGS --entities $MCP_ENTITIES"
 fi
 
 # --log-level (Pass based on ENV var)

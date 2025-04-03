@@ -1,6 +1,6 @@
-# Connectors Entity Types
+# Connectors Entities
 
-This directory contains Pydantic models for entity types that, within the context of our Meta Knowledge Graph, serve as **central hubs or aggregation points**.
+This directory contains Pydantic models for entities that, within the context of our Meta Knowledge Graph, serve as **central hubs or aggregation points**.
 
 These entities act as conceptual anchors that link together diverse information, relationships, and contexts relevant to the Graphiti ecosystem and its operation. They often have numerous connections to other entities, effectively "connecting" various facets of knowledge within the meta-graph.
 

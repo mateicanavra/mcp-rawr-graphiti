@@ -1,6 +1,6 @@
-"""Project entity type for Graphiti MCP Server.
+"""Project entity for Graphiti MCP Server.
 
-This module defines the Project entity type, which represents a project or initiative.
+This module defines the Project entity, which represents a project or initiative.
 """
 
 from pydantic import BaseModel, Field

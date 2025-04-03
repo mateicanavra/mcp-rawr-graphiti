@@ -3,7 +3,7 @@ Based on my analysis of the provided materials, I've identified the key consider
 
 ## Current Understanding
 
-Your Graphiti-based system already has three base entity types:
+Your Graphiti-based system already has three base entities:
 - `Preference` (interaction category)
 - `Procedure` (actions category) 
 - `Requirement` (constraints category)
@@ -19,7 +19,7 @@ The proposed semantic organization divides entities into:
 
 The Graphiti documentation shows that:
 - Episodes represent ingestion events linking to entities via `MENTIONS` edges
-- Custom entity types are defined as Pydantic models with descriptive fields
+- Custom entities are defined as Pydantic models with descriptive fields
 - Communities group related entities automatically
 - Fact triples establish relationships between entities
 

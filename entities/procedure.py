@@ -1,6 +1,6 @@
-"""Procedure entity type for Graphiti MCP Server.
+"""Procedure entity for Graphiti MCP Server.
 
-This module defines the Procedure entity type, which represents actionable steps or procedures to be executed.
+This module defines the Procedure entity, which represents actionable steps or procedures to be executed.
 """
 
 from pydantic import BaseModel, Field

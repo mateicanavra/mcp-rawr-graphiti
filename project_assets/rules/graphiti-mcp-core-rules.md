@@ -21,15 +21,15 @@ For effective project work, be aware of the three key types of Graphiti rules:
 ## Entity Extraction Principles
 
 - **Use structured extraction patterns:** Follow the AI persona, task, context, and instructions format in entity definitions.
-- **Maintain entity type integrity:** Each entity type should have a clear, unique purpose with non-overlapping definitions.
+- **Maintain entity integrity:** Each entity should have a clear, unique purpose with non-overlapping definitions.
 - **Prefer explicit information:** Extract only what is explicitly or strongly implied in the text; avoid assumptions.
 - **Handle ambiguity properly:** If information is missing or uncertain, acknowledge the ambiguity rather than fabricating details.
 - **Follow field definitions strictly:** Respect the description and constraints defined for each field in the entity model.
 
-## Creating New Entity Types
+## Creating New Entities
 
-- **Utilize the `graphiti add-entities` command:** Create new entity type sets with proper scaffolding.
-- **Follow the template pattern:** Use the comprehensive docstring format from `custom_entity_example.py` when defining new entity types.
+- **Utilize the `graphiti add-entities` command:** Create new entity sets with proper scaffolding.
+- **Follow the template pattern:** Use the comprehensive docstring format from `custom_entity_example.py` when defining new entities.
 - **Structure entity classes clearly:** Include AI persona, task definition, context explanation, detailed extraction instructions, and output format.
 - **Use descriptive field definitions:** Each field should have clear descriptions using the Field annotations.
 - **Document extraction logic:** Include specific instructions for identifying and extracting each required field.
@@ -40,7 +40,7 @@ For effective project work, be aware of the three key types of Graphiti rules:
 
 - **Always search first:** Use the `search_nodes` tool to look for relevant preferences and procedures before beginning work.
 - **Search for facts too:** Use the `search_facts` tool to discover relationships and factual information that may be relevant to your task.
-- **Filter by entity type:** Specify `Preference`, `Procedure`, `Requirement`, or other relevant entity types in your node search to get targeted results.
+- **Filter by entity:** Specify `Preference`, `Procedure`, `Requirement`, or other relevant entities in your node search to get targeted results.
 - **Review all matches:** Carefully examine any preferences, procedures, or facts that match your current task.
 
 ### Always Save New or Updated Information
@@ -82,17 +82,17 @@ For effective project work, be aware of the three key types of Graphiti rules:
 - **Leverage advanced search capabilities:** When using search tools:
   - Use hybrid search combining vector similarity, full-text search, and graph traversal.
   - Set appropriate `max_nodes` and `max_facts` to control result volume.
-  - Apply `entity` parameter when filtering for specific entity types (e.g., "Preference", "Procedure").
+  - Apply `entity` parameter when filtering for specific entities (e.g., "Preference", "Procedure").
   - Use advanced re-ranking strategies for more contextually relevant results.
 
 ## MCP Server Codebase Organization
 
 - **Prefer flat directory structures:** Use consolidated, shallow directory hierarchies over deeply nested ones.
-- **Group similar entity types:** Place related entity types within a single directory (e.g., `entities/graphiti/`).
-- **Follow semantic naming:** Name entity type files according to their semantic type (e.g., `ArchitecturalPattern.py`) rather than using generic names.
+- **Group similar entities:** Place related entities within a single directory (e.g., `entities/graphiti/`).
+- **Follow semantic naming:** Name entity files according to their semantic type (e.g., `ArchitecturalPattern.py`) rather than using generic names.
 - **Remove redundant files:** Keep the codebase clean by removing unnecessary `__init__.py` files in auto-loaded directories.
 - **Clean up after reorganization:** Systematically remove empty directories after file restructuring.
-- **Maintain proper entity structure:** Ensure all entity types follow the Pydantic model pattern with well-defined fields, descriptions, and extraction instructions.
+- **Maintain proper entity structure:** Ensure all entities follow the Pydantic model pattern with well-defined fields, descriptions, and extraction instructions.
 
 ## Maintaining Context and Continuity
 

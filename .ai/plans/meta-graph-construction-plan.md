@@ -38,7 +38,7 @@ Contains `__init__.py`, `entity_registry.py`, and a `base/` directory with `pref
 
 ## 4. Registration
 
-`entities/entity_registry.py` provides `register_entity_type` for adding models to a central registry.
+`entities/entity_registry.py` provides `register_entity` for adding models to a central registry.
 
 ## 5. Discrepancy
 
@@ -88,9 +88,9 @@ Here is a step-by-step plan to implement the meta-graph entities:
 7. **Centralize Imports and Registration:** [COMPLETED]
     - Modify `entities/__init__.py`.
     - Import all 14 newly defined entity models from their respective modules (`actions.procedure`, `constraints.requirement`, etc.).
-    - Import `register_entity_type` from `.entity_registry`.
-    - Call `register_entity_type` for each imported model, using a suitable string name (e.g., `"Procedure"`, `"Requirement"`). Consider using the class name (`Model.__name__`) as the key for consistency.
-    - Ensure the existing exports (`register_entity_type`, `get_entity_types`, `get_entity_type_subset`) are maintained.
+    - Import `register_entity` from `.entity_registry`.
+    - Call `register_entity` for each imported model, using a suitable string name (e.g., `"Procedure"`, `"Requirement"`). Consider using the class name (`Model.__name__`) as the key for consistency.
+    - Ensure the existing exports (`register_entity`, `get_entities`, `get_entity_subset`) are maintained.
 
 ### Phase 4: Cleanup and Verification [PENDING]
 
@@ -106,10 +106,10 @@ Here is a step-by-step plan to implement the meta-graph entities:
 
 ## 7. Acceptance Criteria
 
-- All 14 entity types from `meta-graph-draft.md` are implemented as Pydantic models in the specified directory structure under `entities/`.
+- All 14 entities from `meta-graph-draft.md` are implemented as Pydantic models in the specified directory structure under `entities/`.
 - Each model file includes necessary imports and follows the design guidelines.
 - All 14 models are successfully registered upon importing the `entities` package.
-- Calling `get_entity_types()` after import returns a dictionary containing all 14 registered types.
+- Calling `get_entities()` after import returns a dictionary containing all 14 registered types.
 - The code passes configured linting and type checking rules.
 - The existing files in `entities/base/` are consciously addressed (even if deferred).
 

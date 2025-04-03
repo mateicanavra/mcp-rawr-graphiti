@@ -48,15 +48,15 @@ This plan assumes you have the final versions of `docker-compose.yml-NEW`, `Dock
       CMD_ARGS="$CMD_ARGS --use-custom-entities"
     fi
 
-    # --entity-type-dir (Optional path)
-    if [ -n "$MCP_ENTITY_TYPE_DIR" ]; then
-      CMD_ARGS="$CMD_ARGS --entity-type-dir \"$MCP_ENTITY_TYPE_DIR\""
+    # --entities-dir (Optional path)
+    if [ -n "$MCP_ENTITIES_DIR" ]; then
+      CMD_ARGS="$CMD_ARGS --entities-dir \"$MCP_ENTITIES_DIR\""
     fi
 
-    # --entity-types (Optional space-separated list)
+    # --entities (Optional space-separated list)
     # Assumes the python script handles a space-separated list after the flag.
-    if [ -n "$MCP_ENTITY_TYPES" ]; then
-       CMD_ARGS="$CMD_ARGS --entity-types $MCP_ENTITY_TYPES"
+    if [ -n "$MCP_ENTITIES" ]; then
+       CMD_ARGS="$CMD_ARGS --entities $MCP_ENTITIES"
     fi
 
     # --destroy-graph (Boolean flag)
@@ -235,8 +235,8 @@ This plan assumes you have the final versions of `docker-compose.yml-NEW`, `Dock
                 # --- Configuration for entrypoint.sh ---
                 MCP_GROUP_ID: "core-api"
                 MCP_USE_CUSTOM_ENTITIES: "true"
-                MCP_ENTITY_TYPE_DIR: "entities/base"
-                # MCP_ENTITY_TYPES: "" # Explicitly empty/unset
+                MCP_ENTITIES_DIR: "entities/base"
+                # MCP_ENTITIES: "" # Explicitly empty/unset
                 MCP_DESTROY_GRAPH: "false" # Default to false
 
         # --- Custom MCP Server Example 1 (Optional Template) ---
@@ -249,8 +249,8 @@ This plan assumes you have the final versions of `docker-compose.yml-NEW`, `Dock
                 # --- Configuration for entrypoint.sh ---
                 MCP_GROUP_ID: "custom-group-1"
                 MCP_USE_CUSTOM_ENTITIES: "true"
-                MCP_ENTITY_TYPE_DIR: "entities/custom_1"
-                # MCP_ENTITY_TYPES: ""
+                MCP_ENTITIES_DIR: "entities/custom_1"
+                # MCP_ENTITIES: ""
                 MCP_DESTROY_GRAPH: "false" # Default to false
 
         # --- Custom MCP Server Example 2 (Optional Template) ---
@@ -263,8 +263,8 @@ This plan assumes you have the final versions of `docker-compose.yml-NEW`, `Dock
                 # --- Configuration for entrypoint.sh ---
                 MCP_GROUP_ID: "another-custom-group"
                 MCP_USE_CUSTOM_ENTITIES: "true"
-                # MCP_ENTITY_TYPE_DIR: ""
-                MCP_ENTITY_TYPES: "SpecificTypeA SpecificTypeB"
+                # MCP_ENTITIES_DIR: ""
+                MCP_ENTITIES: "SpecificTypeA SpecificTypeB"
                 MCP_DESTROY_GRAPH: "false" # Default to false
 
         # --- Add more custom MCP server definitions below following the pattern ---

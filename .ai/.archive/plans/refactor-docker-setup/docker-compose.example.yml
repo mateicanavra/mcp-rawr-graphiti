@@ -104,8 +104,8 @@ services:
             # --- Configuration for entrypoint.sh ---
             MCP_GROUP_ID: "core-api"
             MCP_USE_CUSTOM_ENTITIES: "true"
-            MCP_ENTITY_TYPE_DIR: "entities/base"
-            # MCP_ENTITY_TYPES: "" # Explicitly empty/unset
+            MCP_ENTITIES_DIR: "entities/base"
+            # MCP_ENTITIES: "" # Explicitly empty/unset
             MCP_DESTROY_GRAPH: "false" # Default to false
 
     # --- Custom MCP Server Example 1 (Optional Template) ---
@@ -118,8 +118,8 @@ services:
             # --- Configuration for entrypoint.sh ---
             MCP_GROUP_ID: "custom-group-1"
             MCP_USE_CUSTOM_ENTITIES: "true"
-            MCP_ENTITY_TYPE_DIR: "entities/custom_1"
-            # MCP_ENTITY_TYPES: ""
+            MCP_ENTITIES_DIR: "entities/custom_1"
+            # MCP_ENTITIES: ""
             MCP_DESTROY_GRAPH: "false" # Default to false
 
     # --- Custom MCP Server Example 2 (Optional Template) ---
@@ -132,8 +132,8 @@ services:
             # --- Configuration for entrypoint.sh ---
             MCP_GROUP_ID: "another-custom-group"
             MCP_USE_CUSTOM_ENTITIES: "true"
-            # MCP_ENTITY_TYPE_DIR: ""
-            MCP_ENTITY_TYPES: "SpecificTypeA SpecificTypeB"
+            # MCP_ENTITIES_DIR: ""
+            MCP_ENTITIES: "SpecificTypeA SpecificTypeB"
             MCP_DESTROY_GRAPH: "false" # Default to false
 
     # --- Add more custom MCP server definitions below following the pattern ---

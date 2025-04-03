@@ -1,6 +1,6 @@
-"""Goal entity type for Graphiti MCP Server.
+"""Goal entity for Graphiti MCP Server.
 
-This module defines the Goal entity type, which represents clearly stated objectives or goals.
+This module defines the Goal entity, which represents clearly stated objectives or goals.
 """
 
 from pydantic import BaseModel, Field

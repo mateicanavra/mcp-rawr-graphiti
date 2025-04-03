@@ -14,7 +14,7 @@ This document outlines the specific knowledge graph schema for the '__PROJECT_NA
 
 ---
 
-## 1. Defined Entity Types
+## 1. Defined Entities
 
 *Add definitions for entities specific to the '__PROJECT_NAME__' project here.*
 *Reference the entity definition files (e.g., Python classes) if applicable.*

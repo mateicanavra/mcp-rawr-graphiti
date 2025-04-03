@@ -12,9 +12,9 @@ This document outlines the specific knowledge graph schema for the 'example' pro
 
 **Maintenance:** For rules on how to update *this* schema file, refer to `@graphiti-knowledge-graph-maintenance.md`.
 
-## 1. Defined Entity Types
+## 1. Defined Entities
 
-The following entity types are defined for this project:
+The following entities are defined for this project:
 
 *   **`Product`**: Represents a specific good or service offered.
     *   Reference: `@mcp_server/entities/example/custom_entity_example.py`
