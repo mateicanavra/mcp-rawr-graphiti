@@ -19,7 +19,7 @@ Start minimal and expand thoughtfully. Leverage Graphiti’s existing architectu
 
 The following minimal directory structure represents your semantic organization clearly:
 
-entity_types/
+entities/
 ├── actions/
 │   └── procedure.py
 ├── constraints/

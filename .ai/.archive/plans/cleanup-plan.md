@@ -14,7 +14,7 @@ Here's my review report focusing on the request to update the README for a fresh
 
 *   **Original Requirements:** The user wants to extract the `mcp_server` directory into a new repository and needs clear instructions for a fresh developer setup. The existing `README.md` is outdated.
 *   **Implementation Details:** The setup involves Python environment management (likely `venv`), dependency installation using `uv`, a custom CLI tool (`graphiti`) built with Typer, Docker/Docker Compose for running services (Neo4j, MCP servers), and configuration via `.env` and YAML files.
-*   **Architectural Context:** The system consists of a core server (`graphiti_mcp_server.py`), a CLI (`graphiti_cli/`), entity definitions (`entity_types/`), Docker configuration (`Dockerfile`, `base-compose.yaml`, generated `docker-compose.yml`), and project management files (`mcp-projects.yaml`).
+*   **Architectural Context:** The system consists of a core server (`graphiti_mcp_server.py`), a CLI (`graphiti_cli/`), entity definitions (`entities/`), Docker configuration (`Dockerfile`, `base-compose.yaml`, generated `docker-compose.yml`), and project management files (`mcp-projects.yaml`).
 *   **Impact:** The primary output required is updated documentation (`README.md`) reflecting the current setup process based on the provided files. A secondary goal is to suggest potential improvements to the installation/distribution process.
 
 ### 2. CODE QUALITY ASSESSMENT

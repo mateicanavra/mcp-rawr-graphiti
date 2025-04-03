@@ -27,7 +27,7 @@ The repository should contain updated documentation (`README.md`) explaining its
 
 2.  **Copy Files:**
     *   Action: Copy the relevant contents of the current `mcp_server` directory to the root of the new `graphiti-mcp-orchestrator` repository.
-    *   Files/Dirs to **Copy**: `scripts/`, `mcp-projects.yaml`, `base-compose.yaml`, `Dockerfile`, `graphiti_mcp_server.py`, `constants.py`, `entity_types/` (containing the 'base' entities), `graphiti_cli/`, `pyproject.toml`, `.env.example`, `README.md` (will be replaced), `.python-version`, `entrypoint.sh`, `rules/` (if applicable), `docs/` (if applicable), `docker-compose.yml` (copy the last generated version as a reference, but it will be ignored by git and regenerated).
+    *   Files/Dirs to **Copy**: `scripts/`, `mcp-projects.yaml`, `base-compose.yaml`, `Dockerfile`, `graphiti_mcp_server.py`, `constants.py`, `entities/` (containing the 'base' entities), `graphiti_cli/`, `pyproject.toml`, `.env.example`, `README.md` (will be replaced), `.python-version`, `entrypoint.sh`, `rules/` (if applicable), `docs/` (if applicable), `docker-compose.yml` (copy the last generated version as a reference, but it will be ignored by git and regenerated).
     *   Files/Dirs to **Exclude/Delete**: `.venv/`, `__pycache__/`, `*.egg-info`, `llm_cache/`, `.ai/`, `dist/`, `uv.lock` (will be regenerated), `.env`.
     *   Files to **Create/Update**: A new `.gitignore`.
 
@@ -39,7 +39,7 @@ The repository should contain updated documentation (`README.md`) explaining its
         *   Verify `[tool.setuptools.py-modules]` includes `constants`.
     *   Action: Verify `Dockerfile`.
         *   Ensure `COPY dist/* /dist/` line is absent or commented out.
-        *   Verify all necessary source files for the *root* MCP server (`graphiti_mcp_server.py`, `constants.py`, `entity_types/base/`, `entrypoint.sh`) are copied.
+        *   Verify all necessary source files for the *root* MCP server (`graphiti_mcp_server.py`, `constants.py`, `entities/base/`, `entrypoint.sh`) are copied.
     *   Action: Verify `mcp-projects.yaml`.
         *   Crucially, ensure the absolute paths listed for external projects are correct for the target deployment environment. This file will likely need **manual adjustment** by the user after cloning the new repository.
     *   Action: Verify `scripts/graphiti`.

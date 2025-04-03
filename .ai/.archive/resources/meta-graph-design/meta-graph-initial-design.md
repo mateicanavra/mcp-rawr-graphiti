@@ -6,7 +6,7 @@ Below is the final recommended initial structure, thoughtfully refined to incorp
 
 This structure remains intuitive, flexible, and clear, reflecting careful semantic categorization while integrating selected high-value recommendations from the other agent:
 
-entity_types/
+entities/
 ├── actions/
 │   └── procedure.py
 ├── constraints/

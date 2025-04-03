@@ -79,7 +79,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 *   **Actions:**
     1.  Inside the inner service loop, locate the `env_vars = CommentedMap()` creation (@LINE:110).
     2.  Modify the setting of `MCP_ENTITY_TYPE_DIR` (@LINE:115): Set it directly to the container path: `env_vars['MCP_ENTITY_TYPE_DIR'] = CONTAINER_ENTITY_PATH`.
-    3.  Remove the `if entity_types is not None:` block (@LINE:117-@LINE:121) if the `types` key in project config is no longer supported (confirm this - current `custom_servers.yaml` uses it @LINE:17). *If `types` is still needed*, ensure `MCP_ENTITY_TYPES` is added correctly to `env_vars`. **Plan Decision:** Let's assume `types` is deprecated for V1 simplicity; remove the block.
+    3.  Remove the `if entities is not None:` block (@LINE:117-@LINE:121) if the `types` key in project config is no longer supported (confirm this - current `custom_servers.yaml` uses it @LINE:17). *If `types` is still needed*, ensure `MCP_ENTITY_TYPES` is added correctly to `env_vars`. **Plan Decision:** Let's assume `types` is deprecated for V1 simplicity; remove the block.
     4.  Get the project environment dictionary: `project_environment = server_conf.get('environment', {})`.
     5.  Merge `project_environment` into `env_vars`: `env_vars.update(project_environment)`. This ensures project-specific vars are added. *Note: `ruamel.yaml`'s `CommentedMap` update preserves order and comments if possible.*
 *   **Acceptance Criteria:**
@@ -121,7 +121,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 *   **File:** `mcp-server/graphiti_mcp_server.py`
 *   **Actions:**
     1.  Inside the `initialize_server` function (after `args = parser.parse_args()` approx. @LINE:761):
-    2.  Define the expected path for base types within the container: `container_base_entity_dir = "/app/entity_types/base"` (Ensure this matches Dockerfile copy destination).
+    2.  Define the expected path for base types within the container: `container_base_entity_dir = "/app/entities/base"` (Ensure this matches Dockerfile copy destination).
     3.  Add logic to *always* load base types first:
         ```python
         if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):
@@ -157,7 +157,7 @@ Okay, here is the detailed, step-by-step implementation plan based on the "Centr
 *   **Objective:** Confirm base entities are copied into the image.
 *   **File:** `Dockerfile` (provided in clipboard)
 *   **Actions:**
-    1.  Verify the line `COPY entity_types/ ./entity_types/` (@LINE:21) is present and correctly copies `mcp-server/entity_types/base` into `/app/entity_types/base` within the image.
+    1.  Verify the line `COPY entities/ ./entities/` (@LINE:21) is present and correctly copies `mcp-server/entities/base` into `/app/entities/base` within the image.
 *   **Acceptance Criteria:** The Docker build process includes the base entity type definitions.
 
 ---

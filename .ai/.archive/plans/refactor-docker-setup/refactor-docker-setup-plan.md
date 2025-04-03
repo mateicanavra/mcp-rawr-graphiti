@@ -235,7 +235,7 @@ This plan assumes you have the final versions of `docker-compose.yml-NEW`, `Dock
                 # --- Configuration for entrypoint.sh ---
                 MCP_GROUP_ID: "core-api"
                 MCP_USE_CUSTOM_ENTITIES: "true"
-                MCP_ENTITY_TYPE_DIR: "entity_types/base"
+                MCP_ENTITY_TYPE_DIR: "entities/base"
                 # MCP_ENTITY_TYPES: "" # Explicitly empty/unset
                 MCP_DESTROY_GRAPH: "false" # Default to false
 
@@ -249,7 +249,7 @@ This plan assumes you have the final versions of `docker-compose.yml-NEW`, `Dock
                 # --- Configuration for entrypoint.sh ---
                 MCP_GROUP_ID: "custom-group-1"
                 MCP_USE_CUSTOM_ENTITIES: "true"
-                MCP_ENTITY_TYPE_DIR: "entity_types/custom_1"
+                MCP_ENTITY_TYPE_DIR: "entities/custom_1"
                 # MCP_ENTITY_TYPES: ""
                 MCP_DESTROY_GRAPH: "false" # Default to false
 

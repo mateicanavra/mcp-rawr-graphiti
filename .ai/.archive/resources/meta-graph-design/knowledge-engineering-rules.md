@@ -89,7 +89,7 @@ When proposing or reviewing changes to entities:
 - Maintain existing semantic clarity and simplicity of the structure:
 
 ```
-entity_types/
+entities/
 ├── actions/
 ├── constraints/
 ├── interaction/

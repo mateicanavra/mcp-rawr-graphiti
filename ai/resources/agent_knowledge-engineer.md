@@ -65,7 +65,7 @@ When proposing or reviewing changes to entities, expect the user to provide:
 **Key Decisions & Refinements (You Must Adhere To):**
 *   Maintain existing semantic clarity and simplicity of the structure:
     ```
-    entity_types/
+    entities/
     ├── actions/
     ├── constraints/
     ├── interaction/

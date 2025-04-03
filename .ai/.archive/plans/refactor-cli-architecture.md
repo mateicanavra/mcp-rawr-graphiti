@@ -16,7 +16,7 @@ We'll aim for a clean, maintainable Python CLI tool using **Typer** for the inte
     ```
     mcp-graphiti/
     ├── mcp_server/
-    │   ├── entity_types/
+    │   ├── entities/
     │   ├── rules/
     │   ├── Dockerfile
     │   ├── entrypoint.sh

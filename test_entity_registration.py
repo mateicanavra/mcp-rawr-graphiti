@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """Test script to verify entity registration.
 
-This script imports the entity_types package and checks that all entities are properly registered.
+This script imports the entities package and checks that all entities are properly registered.
 """
 
-import entity_types
-from entity_types import get_entity_types
+import entities
+from entities import get_entity_types
 
 if __name__ == "__main__":
     # Get all registered entity types

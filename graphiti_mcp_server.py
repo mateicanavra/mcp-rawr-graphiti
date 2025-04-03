@@ -32,12 +32,12 @@ from graphiti_core.search.search_config_recipes import (
 )
 from graphiti_core.search.search_filters import SearchFilters
 from graphiti_core.utils.maintenance.graph_data_operations import clear_data
-from entity_types import get_entity_types, get_entity_type_subset, register_entity_type
+from entities import get_entity_types, get_entity_type_subset, register_entity_type
 from constants import DEFAULT_LOG_LEVEL, DEFAULT_LLM_MODEL, ENV_GRAPHITI_LOG_LEVEL
 
 load_dotenv()
 
-# The ENTITY_TYPES dictionary is managed by the registry in mcp_server.entity_types
+# The ENTITY_TYPES dictionary is managed by the registry in mcp_server.entities
 # NOTE: This global reference is only used for predefined entity subsets below.
 # For the latest entity types, always use get_entity_types() directly.
 ENTITY_TYPES = get_entity_types()
@@ -385,7 +385,7 @@ async def add_episode(
                 
                 # (Entity type determination logic remains the same as previous version)
                 # Import here to ensure we get the most up-to-date entity registry
-                from entity_types import get_entity_types, get_entity_type_subset
+                from entities import get_entity_types, get_entity_type_subset
                 
                 logger.info(f"Configuration settings - use_custom_entities: {config.use_custom_entities}, "
                            f"entity_type_subset param: {entity_type_subset}, "
@@ -417,7 +417,7 @@ async def add_episode(
                     group_id=group_id_str,
                     uuid=uuid,
                     reference_time=datetime.now(timezone.utc),
-                    entity_types=entity_types_to_use,
+                    entities=entity_types_to_use,
                 )
                 logger.info(f"Episode '{name}' added successfully to graph")
 
@@ -507,7 +507,7 @@ async def add_episode_test(
             logger.info(f"[Sync Task - {group_id_str}] Starting processing for episode '{name}'") # Changed log prefix
             try:
                 # Import here to ensure we get the most up-to-date entity registry
-                from entity_types import get_entity_types # Keep get_entity_types import
+                from entities import get_entity_types # Keep get_entity_types import
 
                 # SIMPLIFIED: Determine entity types based only on config flag
                 if config.use_custom_entities:
@@ -527,7 +527,7 @@ async def add_episode_test(
                     group_id=group_id_str,
                     uuid=uuid,
                     reference_time=datetime.now(timezone.utc),
-                    entity_types=entity_types_to_use, # Pass the simplified set
+                    entities=entity_types_to_use, # Pass the simplified set
                 )
                 logger.info(f"Episode '{name}' added successfully to graph")
 
@@ -966,7 +966,7 @@ async def initialize_server() -> MCPConfig:
         logger.info(f'Generated random group_id: {config.group_id}')
 
     # Define the expected path for base entity types within the container
-    container_base_entity_dir = "/app/entity_types/base"
+    container_base_entity_dir = "/app/entities/base"
     
     # Always load base entity types first
     if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):
@@ -998,9 +998,9 @@ async def initialize_server() -> MCPConfig:
         logger.info('Entity extraction disabled (no custom entities will be used)')
         
     # Store the entity types to use if specified
-    if args.entity_types:
-        config.entity_type_subset = args.entity_types
-        logger.info(f'Using entity types: {", ".join(args.entity_types)}')
+    if args.entities:
+        config.entity_type_subset = args.entities
+        logger.info(f'Using entity types: {", ".join(args.entities)}')
     else:
         config.entity_type_subset = None
         if config.use_custom_entities:
