@@ -144,12 +144,19 @@ def ensure_dist_for_build() -> None:
 def docker_up(detached: bool, log_level: str):
     """
     Start all containers using Docker Compose (builds first).
+    Always regenerates the docker-compose.yml file to ensure latest configuration.
     
     Args:
         detached (bool): Whether to run in detached mode
         log_level (str): Log level to use
     """
     ensure_dist_for_build()
+    
+    # Always regenerate the docker-compose.yml file to ensure latest configuration
+    repo_root = get_repo_root()
+    print(f"{CYAN}Regenerating docker-compose.yml to ensure latest configuration...{NC}")
+    compose_generator.generate_compose_logic(repo_root)
+    
     cmd = ["up", "--build", "--force-recreate"]
     run_docker_compose(cmd, log_level, detached)
     print(f"{GREEN}Docker compose up completed.{NC}")
@@ -180,12 +187,19 @@ def docker_restart(detached: bool, log_level: str):
 def docker_reload(service_name: str):
     """
     Restart a specific running service container.
+    Always regenerates the docker-compose.yml file to ensure latest configuration.
     
     Args:
         service_name (str): Name of the service to reload
     """
     ensure_docker_compose_file()
     print(f"{BOLD}Attempting to restart service '{CYAN}{service_name}{NC}'...{NC}")
+    
+    # Always regenerate the docker-compose.yml file to ensure latest configuration
+    repo_root = get_repo_root()
+    print(f"{CYAN}Regenerating docker-compose.yml to ensure latest configuration...{NC}")
+    compose_generator.generate_compose_logic(repo_root)
+    
     try:
         run_docker_compose(["restart", service_name], log_level=DEFAULT_LOG_LEVEL_STR)
         print(f"{GREEN}Service '{service_name}' restarted successfully.{NC}")
