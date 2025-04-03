@@ -51,7 +51,8 @@ ENV_MCP_GROUP_ID = "MCP_GROUP_ID"         # Group ID (namespace) for graph data
 ENV_MCP_USE_CUSTOM_ENTITIES = "MCP_USE_CUSTOM_ENTITIES"  # Whether to use custom entity extraction
 ENV_MCP_USE_CUSTOM_ENTITIES_VALUE = "true"  # Value to enable custom entity extraction
 ENV_MCP_ENTITIES_DIR = "MCP_ENTITIES_DIR"  # Directory for custom entity definitions
-ENV_MCP_ENTITIES = "MCP_ENTITIES"  # Added
+ENV_MCP_ENTITIES = 'MCP_ENTITIES' # Env var for comma-separated list of subdirs to load within the mounted dir
+ENV_MCP_INCLUDE_ROOT_ENTITIES = 'MCP_INCLUDE_ROOT_ENTITIES' # NEW: Env var (true/false) to control loading base entities
 
 # --- Container Path Constants ---
 # Paths used within Docker containers for entity mounting
@@ -111,6 +112,7 @@ PROJECT_CONTAINER_NAME_KEY = "container_name"      # Container name
 PROJECT_PORT_DEFAULT_KEY = "port_default"          # Default port
 PROJECT_GROUP_ID_KEY = "group_id"                  # Group ID
 PROJECT_ENVIRONMENT_KEY = "environment"            # Environment variables
+PROJECT_INCLUDE_ROOT_ENTITIES_KEY = 'include_root_entities' # NEW: Config key for including base entities
 
 # --- Default Value Constants ---
 # Default values used when specific settings are not provided

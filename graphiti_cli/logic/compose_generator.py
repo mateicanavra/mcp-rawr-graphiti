@@ -35,13 +35,15 @@ from constants import (
     COMPOSE_PORTS_KEY, COMPOSE_ENVIRONMENT_KEY, COMPOSE_VOLUMES_KEY,
     # Project config keys
     PROJECT_SERVICES_KEY, PROJECT_SERVER_ID_KEY, PROJECT_ENTITIES_DIR_KEY, 
-    PROJECT_CONTAINER_NAME_KEY, PROJECT_PORT_DEFAULT_KEY, PROJECT_GROUP_ID_KEY, PROJECT_ENVIRONMENT_KEY,
+    PROJECT_CONTAINER_NAME_KEY, PROJECT_PORT_DEFAULT_KEY, PROJECT_GROUP_ID_KEY, PROJECT_ENVIRONMENT_KEY, PROJECT_INCLUDE_ROOT_ENTITIES_KEY, # Added
     # Configuration keys
     CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG,
     # Service name constants
     SERVICE_NAME_PREFIX,
     # Enums (Import LogLevel from constants now)
-    LogLevel
+    LogLevel,
+    # Environment variables (ensure new one is imported)
+    ENV_MCP_INCLUDE_ROOT_ENTITIES # Added
 )
 
 # --- Docker Compose Header Constants ---
@@ -263,6 +265,16 @@ def generate_compose_logic(
             # and handles MCP_ENTITIES (setting to "" if not present)
             # --- MODIFIED: Set MCP_ENTITIES based *only* on the derived selection_spec ---
             env_vars[ENV_MCP_ENTITIES] = selection_spec
+
+            # --- NEW: Handle include_root_entities flag ---
+            # Default to True if the key is missing or not a boolean
+            include_root = server_conf.get(PROJECT_INCLUDE_ROOT_ENTITIES_KEY, True)
+            if not isinstance(include_root, bool):
+                print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): Invalid value for '{PROJECT_INCLUDE_ROOT_ENTITIES_KEY}'. Expected boolean, got {type(include_root)}. Defaulting to 'true'.{NC}")
+                include_root = True
+            # Set the environment variable as a string "true" or "false"
+            env_vars[ENV_MCP_INCLUDE_ROOT_ENTITIES] = str(include_root).lower()
+            # --- End NEW ---
 
             # Add other project-specific environment variables from mcp-config.yaml
             project_environment = server_conf.get(PROJECT_ENVIRONMENT_KEY, {})

@@ -51,6 +51,15 @@ if [ "$NEO4J_DESTROY_ENTIRE_GRAPH" = "true" ]; then
   echo "                 Set to 'false' immediately after use to prevent accidental data loss."
 fi
 
+# --include-root-entities (Pass based on ENV var, defaults to "true" if not set by compose)
+# The python script expects "true" or "false" as a string
+if [ -n "$MCP_INCLUDE_ROOT_ENTITIES" ]; then
+  CMD_ARGS="$CMD_ARGS --include-root-entities $MCP_INCLUDE_ROOT_ENTITIES"
+else
+  # Default to true if the env var isn't set for some reason (should be set by compose generator)
+  CMD_ARGS="$CMD_ARGS --include-root-entities true"
+fi
+
 # Add logic for any other configurable flags here...
 
 # Combine prefix and arguments
