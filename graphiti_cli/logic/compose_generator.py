@@ -127,10 +127,11 @@ def generate_compose_logic(
                 continue
 
             server_id = server_conf.get(PROJECT_SERVER_ID_KEY)
-            entities_dir = server_conf.get(PROJECT_ENTITIES_DIR_KEY)  # Relative path within project
+            # --- MODIFIED: Read entities_dir config (can be str or list) ---
+            entities_dir_config = server_conf.get(PROJECT_ENTITIES_DIR_KEY)
 
-            if not server_id or not entities_dir:
-                print(f"Warning: Skipping service in '{project_name}' due to missing '{PROJECT_SERVER_ID_KEY}' or '{PROJECT_ENTITIES_DIR_KEY}': {server_conf}")
+            if not server_id or not entities_dir_config: # Check if config exists
+                print(f"{YELLOW}Warning: Skipping service '{server_id}' in project '{project_name}' due to missing '{PROJECT_SERVER_ID_KEY}' or '{PROJECT_ENTITIES_DIR_KEY}'.{NC}")
                 continue
 
             # --- Determine Service Configuration ---
@@ -164,35 +165,113 @@ def generate_compose_logic(
             # Set the default for custom entity usage FIRST
             env_vars[ENV_MCP_USE_CUSTOM_ENTITIES] = ENV_MCP_USE_CUSTOM_ENTITIES_VALUE # Default to True
 
-            # Calculate absolute host path for entity volume mount
-            abs_host_entity_path = (project_root_dir / DIR_AI / DIR_GRAPH / entities_dir).resolve()
-            if not abs_host_entity_path.is_dir():
-                print(f"Warning: Entity directory '{abs_host_entity_path}' for service '{service_name}' does not exist. Volume mount might fail.")
-                # Continue anyway, Docker will create an empty dir inside container if host path doesn't exist
+            # --- NEW: Determine volume mount path and selection spec based on entities_dir_config type ---
+            abs_host_entity_path = None
+            selection_spec = ""
+            valid_config = True
+            base_graph_path = project_root_dir / DIR_AI / DIR_GRAPH
 
-            # Set container path for entity directory env var
-            # This is the fixed path *inside* the container where the host directory (abs_host_entity_path) is mounted.
+            if isinstance(entities_dir_config, str):
+                # Single directory specified (load all)
+                relative_path = Path(entities_dir_config) # Relative to ai/graph/
+                abs_host_entity_path = (base_graph_path / relative_path).resolve()
+                if not abs_host_entity_path.is_dir():
+                    # Add project_name context
+                    print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): Entity directory '{abs_host_entity_path}' does not exist. Volume mount might fail.{NC}")
+                selection_spec = "" # Load all within the mounted dir
+
+            elif isinstance(entities_dir_config, list):
+                # List of subdirectories specified (selective load)
+                if not entities_dir_config:
+                    # Handle empty list: Default to loading all from standard 'entities' dir
+                    # Add project_name context
+                    print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): Empty list provided for '{PROJECT_ENTITIES_DIR_KEY}'. Defaulting to loading all from '{DIR_ENTITIES}'.{NC}")
+                    relative_path = Path(DIR_ENTITIES) # Use constant DIR_ENTITIES
+                    abs_host_entity_path = (base_graph_path / relative_path).resolve()
+                    if not abs_host_entity_path.is_dir():
+                         # Add project_name context
+                         print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): Default entity directory '{abs_host_entity_path}' does not exist.{NC}")
+                    selection_spec = ""
+                else:
+                    # Process the list
+                    absolute_paths = [(base_graph_path / p).resolve() for p in entities_dir_config]
+
+                    # Find common parent directory (absolute)
+                    try:
+                        common_parent_abs = Path(os.path.commonpath(absolute_paths))
+                        if not common_parent_abs.is_dir():
+                             common_parent_abs = common_parent_abs.parent # Use parent if common path is a file/subdir itself
+                    except ValueError:
+                         # Add project_name context
+                         print(f"{RED}Error (Project: '{project_name}', Service: '{service_name}'): Cannot determine common parent for '{PROJECT_ENTITIES_DIR_KEY}' list. Paths might be invalid or on different drives.{NC}")
+                         valid_config = False
+
+                    if valid_config:
+                        # Validate all paths share the *same* immediate parent
+                        first_parent = absolute_paths[0].parent
+                        if not all(p.parent == first_parent for p in absolute_paths):
+                            # Add project_name context
+                            print(f"{RED}Error (Project: '{project_name}', Service: '{service_name}'): Paths in '{PROJECT_ENTITIES_DIR_KEY}' list do not share the same immediate parent directory ('{first_parent}').{NC}")
+                            valid_config = False
+                        # Ensure the calculated common parent is the immediate parent
+                        elif first_parent != common_parent_abs:
+                             # Add project_name context
+                             print(f"{RED}Error (Project: '{project_name}', Service: '{service_name}'): Paths in '{PROJECT_ENTITIES_DIR_KEY}' list must reside directly under a single common parent. Found parent '{first_parent}', but common path resolves differently ('{common_parent_abs}'). Check paths.{NC}")
+                             valid_config = False
+
+
+                    if valid_config:
+                        abs_host_entity_path = common_parent_abs # Mount the common parent
+
+                        # Extract subdirs and validate existence
+                        subdirs_to_select = []
+                        for p_abs in absolute_paths:
+                            subdir_name = p_abs.name
+                            if not p_abs.is_dir():
+                                # Add project_name context
+                                print(f"{RED}Error (Project: '{project_name}', Service: '{service_name}'): Specified entity path '{p_abs}' is not a directory or does not exist.{NC}")
+                                valid_config = False
+                                break # Stop validation on first error
+                            subdirs_to_select.append(subdir_name)
+
+                        if valid_config:
+                            # Validate subdir names don't contain commas
+                            invalid_names = [name for name in subdirs_to_select if ',' in name]
+                            if invalid_names:
+                                # Add project_name context
+                                print(f"{RED}Error (Project: '{project_name}', Service: '{service_name}'): Subdirectory names in '{PROJECT_ENTITIES_DIR_KEY}' cannot contain commas. Invalid names: {invalid_names}{NC}")
+                                valid_config = False
+                            else:
+                                selection_spec = ",".join(subdirs_to_select)
+            else:
+                # Invalid type for entities_dir
+                # Add project_name context
+                print(f"{RED}Error (Project: '{project_name}', Service: '{service_name}'): Invalid type for '{PROJECT_ENTITIES_DIR_KEY}'. Expected string or list, got {type(entities_dir_config)}.{NC}")
+                valid_config = False
+
+            # --- Check validity before proceeding ---
+            if not valid_config:
+                # Add project_name context
+                print(f"{RED}Skipping service '{service_name}' in project '{project_name}' due to invalid entity configuration.{NC}")
+                continue # Skip to the next service in the loop
+
+            # --- Set container path env var (always the same fixed path) ---
             env_vars[ENV_MCP_ENTITIES_DIR] = PROJECT_CONTAINER_ENTITY_PATH
 
             # Add project-specific environment variables from mcp-config.yaml
             # This allows overriding the default MCP_USE_CUSTOM_ENTITIES=true if set to "false" in the config,
             # and handles MCP_ENTITIES (setting to "" if not present)
+            # --- MODIFIED: Set MCP_ENTITIES based *only* on the derived selection_spec ---
+            env_vars[ENV_MCP_ENTITIES] = selection_spec
+
+            # Add other project-specific environment variables from mcp-config.yaml
             project_environment = server_conf.get(PROJECT_ENVIRONMENT_KEY, {})
             if isinstance(project_environment, dict):
-                # Check if MCP_ENTITIES is already defined in the project config
-                if ENV_MCP_ENTITIES not in project_environment:
-                    # If not defined, set it to empty string by default
-                    # This prevents accidental overrides from .env and triggers default behavior in entrypoint.sh
-                    env_vars[ENV_MCP_ENTITIES] = ""
-                # Merge project-specific environment variables AFTER setting the default
+                # Ensure MCP_ENTITIES from this logic isn't overwritten if accidentally present in project_environment
+                project_environment.pop(ENV_MCP_ENTITIES, None)
                 env_vars.update(project_environment)
             else:
                 print(f"Warning: Invalid '{PROJECT_ENVIRONMENT_KEY}' section for service '{service_name}' in '{project_config_path}'. Expected a dictionary.")
-            
-            # If MCP_ENTITIES was NOT in project_environment, but we haven't set it yet (e.g., project_environment was empty)
-            # ensure it's set to empty string.
-            if ENV_MCP_ENTITIES not in env_vars:
-                 env_vars[ENV_MCP_ENTITIES] = ""
 
             new_service[COMPOSE_ENVIRONMENT_KEY] = env_vars
 
@@ -205,8 +284,13 @@ def generate_compose_logic(
                 print(f"Warning: '{COMPOSE_VOLUMES_KEY}' merged from anchor for service '{service_name}' is not a list. Overwriting.")
                 new_service[COMPOSE_VOLUMES_KEY] = []
 
-            # Append the entity volume mount (read-only)
-            new_service[COMPOSE_VOLUMES_KEY].append(f"{abs_host_entity_path}:{PROJECT_CONTAINER_ENTITY_PATH}:ro")
+            # --- MODIFIED: Append the entity volume mount using determined path ---
+            if abs_host_entity_path: # Check if path was determined successfully
+                new_service[COMPOSE_VOLUMES_KEY].append(f"{abs_host_entity_path}:{PROJECT_CONTAINER_ENTITY_PATH}:ro")
+            else:
+                 # This case should be caught by valid_config check, but as a safeguard:
+                 # Add project_name context
+                 print(f"{RED}Internal Error (Project: '{project_name}', Service: '{service_name}'): Could not determine entity path for volume mount. Skipping volume mount.{NC}")
 
             # --- Add to Services Map ---
             services_map[service_name] = new_service

@@ -104,7 +104,7 @@ class GraphitiConfig(BaseModel):
     model_name: Optional[str] = None
     group_id: Optional[str] = None
     use_custom_entities: bool = False
-    entity_subset: Optional[list[str]] = None
+    # entity_subset: Optional[list[str]] = None # REMOVED: This is now controlled by loading mechanism via --entities arg
 
     @classmethod
     def from_env(cls) -> 'GraphitiConfig':
@@ -383,28 +383,13 @@ async def add_episode(
                         # Alternatively, uncomment the next line to stop processing on bad JSON:
                         # raise ValueError(f"Invalid JSON provided for format='json': {json_err}") from json_err
                 
-                # (Entity determination logic remains the same as previous version)
-                # Import here to ensure we get the most up-to-date entity registry
-                from entities import get_entities, get_entity_subset
-                
-                logger.info(f"Configuration settings - use_custom_entities: {config.use_custom_entities}, "
-                           f"entity_subset param: {entity_subset}, "
-                           f"config.entity_subset: {config.entity_subset}")
-                
-                if not config.use_custom_entities:
-                    entities_to_use = {}
-                    logger.info("Custom entities disabled, using empty entity dictionary")
-                elif entity_subset:
-                    entities_to_use = get_entity_subset(entity_subset)
-                    logger.info(f"Using function parameter entity subset: {entity_subset}")
-                elif config.entity_subset:
-                    entities_to_use = get_entity_subset(config.entity_subset)
-                    logger.info(f"Using command-line entity subset: {config.entity_subset}")
-                else:
-                    entities_to_use = get_entities()
-                    logger.info(f"Using all registered entities: {list(entities_to_use.keys())}")
-                
-                logger.info(f"Final entities being used: {list(entities_to_use.keys())}")
+                # --- MODIFIED: Always use all currently loaded/registered entities ---
+                # The decision of which entities are available is made at server startup
+                # based on the --entities argument and loaded modules.
+                from entities import get_entities
+                entities_to_use = get_entities()
+                logger.info(f"Using all currently registered entities for episode processing: {list(entities_to_use.keys())}")
+                # --- End Modification ---
 
                 # Call the core library function
                 # IMPORTANT: Pass episode_body_str for now, even if format='json',
@@ -883,12 +868,15 @@ async def initialize_server() -> MCPConfig:
         help='Enable entity extraction using the predefined ENTITIES',
     )
     # Add argument for specifying entities
+    # --- MODIFIED: --entities now takes a comma-separated string for subdir selection ---
     parser.add_argument(
         '--entities',
-        nargs='+',
-        help='Specify which entities to use (e.g., --entities Requirement Preference). '
-        'If not provided but --use-custom-entities is set, all registered entities will be used.',
+        type=str,
+        default="", # Default to empty string, meaning load all
+        help='Comma-separated list of entity subdirectories (relative to --entities-dir) to load. '
+             'If empty, all entities in --entities-dir are loaded.'
     )
+    # --- End Modification ---
     # Add argument for custom entity directory
     parser.add_argument(
         '--entities-dir',
@@ -922,7 +910,8 @@ async def initialize_server() -> MCPConfig:
     # Always load base entities first
     if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):
         logger.info(f'Loading base entities from: {container_base_entity_dir}')
-        load_entities_from_directory(container_base_entity_dir)
+        # --- MODIFIED: Always load all base entities ---
+        load_entities_from_directory(container_base_entity_dir, "")
     else:
         logger.warning(f"Base entities directory not found at: {container_base_entity_dir}")
     
@@ -935,7 +924,8 @@ async def initialize_server() -> MCPConfig:
         if abs_project_dir != abs_base_dir:
             if os.path.exists(abs_project_dir) and os.path.isdir(abs_project_dir):
                 logger.info(f'Loading project-specific entities from: {abs_project_dir}')
-                load_entities_from_directory(abs_project_dir)
+                # --- MODIFIED: Pass the entity selection spec from args ---
+                load_entities_from_directory(abs_project_dir, args.entities)
             else:
                 logger.warning(f"Project entities directory not found or not a directory: {abs_project_dir}")
         else:
@@ -948,15 +938,11 @@ async def initialize_server() -> MCPConfig:
     else:
         logger.info('Entity extraction disabled (no custom entities will be used)')
         
-    # Store the entities to use if specified
-    if args.entities:
-        config.entity_subset = args.entities
-        logger.info(f'Using entities: {", ".join(args.entities)}')
-    else:
-        config.entity_subset = None
-        if config.use_custom_entities:
-            logger.info('Using all registered entities')
-        
+    # --- REMOVED: Old logic for storing --entities list in config.entity_subset ---
+    # This is now handled directly by the load_entities_from_directory function
+    # based on the comma-separated string passed via args.entities.
+    # --- End Removal ---
+
     # Log all registered entities after initialization
     logger.info(f"All registered entities after initialization: {len(get_entities())}")
     for entity_name in get_entities().keys():
@@ -1005,66 +991,109 @@ def main():
         raise
 
 
-def load_entities_from_directory(directory_path: str) -> None:
-    """Load all Python modules in the specified directory as entities.
+# --- NEW: Helper function for robust module loading ---
+def _load_and_register_entity_module(file_path: Path) -> None:
+    """Loads a single Python file, finds, and registers entity classes."""
+    module_name = file_path.stem
+    full_module_path = str(file_path.absolute())
     
-    This function dynamically imports all Python files in the specified directory,
-    and automatically registers any Pydantic BaseModel classes that have docstrings.
-    No explicit imports or registration calls are needed in the entity files.
-    
-    Args:
-        directory_path: Path to the directory containing entity modules
-    """
-    logger.info(f"Attempting to load entities from directory: {directory_path}")
-    directory = Path(directory_path)
-    if not directory.exists() or not directory.is_dir():
-        logger.warning(f"Entities directory {directory_path} does not exist or is not a directory")
-        return
-        
-    # Find all Python files in the directory
-    python_files = list(directory.glob('*.py'))
-    logger.info(f"Found {len(python_files)} Python files in {directory_path}")
-    
-    for file_path in python_files:
-        if file_path.name.startswith('__'):
-            continue  # Skip __init__.py and similar files
+    try:
+        # Dynamically import the module
+        spec = importlib.util.spec_from_file_location(module_name, full_module_path)
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            # Add module to sys.modules BEFORE exec_module to handle circular imports if any
+            # sys.modules[module_name] = module # Consider if needed, might complicate things
+            spec.loader.exec_module(module)
             
-        module_name = file_path.stem
-        full_module_path = str(file_path.absolute())
-        
-        try:
-            # Dynamically import the module
-            spec = importlib.util.spec_from_file_location(module_name, full_module_path)
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
+            entities_registered = 0
+            # Look for BaseModel classes in the module
+            for attribute_name in dir(module):
+                attribute = getattr(module, attribute_name)
                 
-                # Track how many entities were registered from this file
-                entities_registered = 0
-                
-                # Look for BaseModel classes in the module
-                for attribute_name in dir(module):
-                    attribute = getattr(module, attribute_name)
+                # Check if it's a class, a subclass of BaseModel, not BaseModel itself, and has a docstring
+                if (isinstance(attribute, type) and
+                    issubclass(attribute, BaseModel) and
+                    attribute != BaseModel and
+                    attribute.__doc__):
                     
-                    # Check if it's a class and a subclass of BaseModel
-                    if (isinstance(attribute, type) and 
-                        issubclass(attribute, BaseModel) and 
-                        attribute != BaseModel and
-                        attribute.__doc__):  # Only consider classes with docstrings
-                        
-                        # Register the entity
-                        register_entity(attribute_name, attribute)
-                        entities_registered += 1
-                        logger.info(f"Auto-registered entity: {attribute_name}")
-                
-                logger.info(f"Successfully loaded entity module: {module_name} (registered {entities_registered} entities)")
-        except Exception as e:
-            logger.error(f"Error loading entity module {module_name}: {str(e)}")
-    
-    # Log total registered entities after loading this directory
-    logger.info(f"Total registered entities after loading {directory_path}: {len(get_entities())}")
-    for entity_name in get_entities().keys():
-        logger.info(f"  - Registered entity: {entity_name}")
+                    # Register the entity
+                    register_entity(attribute_name, attribute)
+                    entities_registered += 1
+                    logger.debug(f"Auto-registered entity: {attribute_name} from {file_path.name}")
+            
+            if entities_registered > 0:
+                 logger.info(f"Successfully loaded module: {file_path.name} (registered {entities_registered} entities)")
+            # else:
+            #      logger.debug(f"Loaded module {file_path.name}, but found no entities to register.")
+
+    except Exception as e:
+        logger.error(f"Error loading entity module {file_path.name} ({full_module_path}): {str(e)}", exc_info=True)
+        # Continue loading other modules
+
+# --- NEW: Helper function for recursive loading ---
+def _load_modules_recursive(base_dir: Path) -> None:
+    """Recursively finds and loads Python entity modules from a base directory."""
+    logger.info(f"Recursively loading entities from: {base_dir}")
+    python_files_found = 0
+    for file_path in base_dir.rglob('*.py'):
+        if file_path.name.startswith('__'):
+            continue  # Skip __init__.py etc.
+        python_files_found += 1
+        _load_and_register_entity_module(file_path)
+    if python_files_found == 0:
+        logger.warning(f"No Python files found for entity loading in {base_dir}")
+
+
+# --- MODIFIED: Main loading function now handles selection spec ---
+def load_entities_from_directory(directory_path: str, subdir_selection_spec: str = "") -> None:
+    """Load Python entity modules from a directory, optionally filtering by subdirectories.
+
+    If subdir_selection_spec is empty, loads all entities recursively from directory_path.
+    If subdir_selection_spec is provided (comma-separated subdir names), loads entities
+    recursively only from those specific subdirectories within directory_path.
+
+    Args:
+        directory_path: Base path to the directory containing entity modules/subdirectories.
+        subdir_selection_spec: Comma-separated string of subdirectory names to load, or empty to load all.
+    """
+    logger.info(f"Loading entities from base directory: {directory_path} with selection spec: '{subdir_selection_spec or 'ALL'}'")
+    base_directory = Path(directory_path)
+    if not base_directory.exists() or not base_directory.is_dir():
+        logger.warning(f"Base entities directory '{directory_path}' does not exist or is not a directory. Skipping load.")
+        return
+
+    if not subdir_selection_spec:
+        # Load all recursively from the base directory
+        _load_modules_recursive(base_directory)
+    else:
+        # Load only specified subdirectories
+        selected_subdirs = [subdir.strip() for subdir in subdir_selection_spec.split(',') if subdir.strip()]
+        logger.info(f"Selectively loading entities from subdirectories: {selected_subdirs}")
+
+        if not selected_subdirs:
+             logger.warning(f"Empty or invalid subdir selection spec provided: '{subdir_selection_spec}'. No specific subdirectories will be loaded.")
+             return
+
+        for subdir_name in selected_subdirs:
+            target_dir = base_directory / subdir_name
+            if target_dir.exists() and target_dir.is_dir():
+                _load_modules_recursive(target_dir)
+            else:
+                logger.warning(f"Specified entity subdirectory '{target_dir}' does not exist or is not a directory. Skipping.")
+            # --- Commented out: Logic for loading specific files ---
+            # elif target_dir.exists() and target_dir.is_file() and target_dir.suffix == '.py':
+            #     logger.info(f"Loading specific entity file: {target_dir}")
+            #     _load_and_register_entity_module(target_dir)
+            # else:
+            #     logger.warning(f"Specified entity path '{target_dir}' is not a directory or a Python file. Skipping.")
+            # --- End Comment ---
+
+    # Log total registered entities after attempting load for this directory path
+    final_count = len(get_entities())
+    logger.info(f"Finished loading entities for path '{directory_path}'. Total registered entities: {final_count}")
+    if final_count > 0:
+        logger.debug(f"Currently registered entities: {list(get_entities().keys())}")
 
 
 if __name__ == '__main__':
