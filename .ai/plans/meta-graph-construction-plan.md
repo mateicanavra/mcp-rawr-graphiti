@@ -2,6 +2,8 @@
 
 ## 1. Overview
 
+**Status: Phase 1, 2, and 3 Completed. Ready for Phase 4.**
+
 1. **Goal:** Implement the 14 Pydantic models defined in `ai/resources/meta-graph-draft.md` within the `entity_types` directory.
 2. **Design Guidelines:** Follow the patterns in `ai/resources/entity-design-guidelines.md` and `ai/resources/entity-design-example.md` (using `pydantic.BaseModel`, `Field` with descriptions).
 
@@ -46,55 +48,51 @@ The target structure differs from the existing `base/` directory content.
 
 Here is a step-by-step plan to implement the meta-graph entities:
 
-### Phase 1: Setup and Structure
+### Phase 1: Setup and Structure [COMPLETED]
 
-1. **Create Directory Structure:**
+1. **Create Directory Structure:** [COMPLETED]
     - Create the following directories under `entity_types/`:
         - `actions`
         - `constraints`
         - `interaction`
         - `connectors`
         - `resources`
-    - Create `__init__.py` files within each of these new directories to mark them as Python packages.
+    - Create `__init__.py` files within each of these new directories to mark them as Python packages. [COMPLETED]
 
-### Phase 2: Entity Implementation
+### Phase 2: Entity Implementation [COMPLETED]
 
-2. **Implement `actions/procedure.py`:**
+2. **Implement `actions/procedure.py`:** [COMPLETED]
     - Create the file `entity_types/actions/procedure.py`.
     - Define the `Procedure` Pydantic model as specified in `meta-graph-draft.md`, ensuring imports (`BaseModel`, `Field` from `pydantic`).
-
-3. **Implement `constraints/requirement.py`:**
+3. **Implement `constraints/requirement.py`:** [COMPLETED]
     - Create the file `entity_types/constraints/requirement.py`.
     - Define the `Requirement` Pydantic model.
-
-4. **Implement `interaction` Models:**
+4. **Implement `interaction` Models:** [COMPLETED]
     - Create `entity_types/interaction/interaction_model.py` and define `InteractionModel`.
     - Create `entity_types/interaction/preference.py` and define `Preference`.
     - Create `entity_types/interaction/feedback.py` and define `Feedback`.
-
-5. **Implement `connectors` Models:**
+5. **Implement `connectors` Models:** [COMPLETED]
     - Create `entity_types/connectors/agent.py` and define `Agent`.
     - Create `entity_types/connectors/project.py` and define `Project`.
     - Create `entity_types/connectors/resource.py` and define `Resource`.
     - Create `entity_types/connectors/goal.py` and define `Goal`.
     - Create `entity_types/connectors/developer.py` and define `Developer`.
     - Create `entity_types/connectors/context_bundle.py` and define `ContextBundle`.
-
-6. **Implement `resources` Models:**
+6. **Implement `resources` Models:** [COMPLETED]
     - Create `entity_types/resources/documentation.py` and define `Documentation`.
     - Create `entity_types/resources/artifact.py` and define `Artifact`.
     - Create `entity_types/resources/tool.py` and define `Tool`.
 
-### Phase 3: Registration
+### Phase 3: Registration [COMPLETED]
 
-7. **Centralize Imports and Registration:**
+7. **Centralize Imports and Registration:** [COMPLETED]
     - Modify `entity_types/__init__.py`.
     - Import all 14 newly defined entity models from their respective modules (`actions.procedure`, `constraints.requirement`, etc.).
     - Import `register_entity_type` from `.entity_registry`.
     - Call `register_entity_type` for each imported model, using a suitable string name (e.g., `"Procedure"`, `"Requirement"`). Consider using the class name (`Model.__name__`) as the key for consistency.
     - Ensure the existing exports (`register_entity_type`, `get_entity_types`, `get_entity_type_subset`) are maintained.
 
-### Phase 4: Cleanup and Verification
+### Phase 4: Cleanup and Verification [PENDING]
 
 8. **Address Existing `base/` Directory:**
     - **Decision Point:** Determine the fate of `entity_types/base/preferences.py`, `procedures.py`, and `requirements.py`.
