@@ -13,5 +13,11 @@ class Resource(BaseModel):
     1. Specific tools, datasets, or other assets mentioned explicitly.
     """
 
+    id: str = Field(..., description="Resource ID (unique readable identifier).")
     name: str = Field(..., description="Resource name.")
     description: str = Field(..., description="Description of the resource.") 
+    type: str = Field(..., description="Type of the resource (reference, guide, article, etc.)")
+    location: str = Field(..., description="Location of the resource (URL, file path, etc.)")
+    author: str = Field(..., description="Author of the resource.")
+    related_resources: list[str] = Field(default_factory=list, description="List of related resources")
+    
