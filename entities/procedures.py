@@ -1,6 +1,6 @@
 """Procedure entity for Graphiti MCP Server."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Procedure(BaseModel):
@@ -17,6 +17,8 @@ class Procedure(BaseModel):
     8. Capture any stated purpose or goal of the procedure
     9. Summarize complex procedures while maintaining critical details
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     description: str = Field(
         ...,

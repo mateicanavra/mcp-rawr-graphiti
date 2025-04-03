@@ -3,7 +3,7 @@
 This module defines the Feedback entity, which represents user feedback on actions or recommendations.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Feedback(BaseModel):
@@ -26,6 +26,8 @@ class Feedback(BaseModel):
     ## Output Format
     A Feedback entity with fields populated according to explicitly available information.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     content: str = Field(..., description="Content of the feedback provided.")
     source: str = Field(..., description="Source or origin of the feedback.")

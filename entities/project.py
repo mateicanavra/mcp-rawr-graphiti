@@ -3,7 +3,7 @@
 This module defines the Project entity, which represents a project or initiative.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Project(BaseModel):
@@ -17,6 +17,8 @@ class Project(BaseModel):
     5. Clearly track start and end dates.
     6. Clearly track justification for the project.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     project_id: str = Field(..., description="Unique identifier for the project.")
     name: str = Field(..., description="Name of the project.")

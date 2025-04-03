@@ -3,7 +3,7 @@
 This module defines the Developer entity, which represents developer-specific working style and context.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Developer(BaseModel):
@@ -12,6 +12,8 @@ class Developer(BaseModel):
     Instructions for identifying and extracting developer context:
     1. Explicit statements about developer working style, patterns, expertise, and other relevant information.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     developer_id: str = Field(..., description="Unique identifier for the developer.")
     name: str = Field(..., description="Name of the developer.")

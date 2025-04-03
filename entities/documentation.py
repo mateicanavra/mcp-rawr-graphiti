@@ -3,7 +3,7 @@
 This module defines the Documentation entity, which represents reference materials or documentation resources.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Documentation(BaseModel):
@@ -26,6 +26,8 @@ class Documentation(BaseModel):
     ## Output Format
     A Documentation entity with fields populated according to explicitly available information.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     doc_id: str = Field(..., description="Unique identifier for the documentation.")
     title: str = Field(..., description="Title of the documentation.")

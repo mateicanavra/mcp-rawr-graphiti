@@ -120,6 +120,7 @@ DEFAULT_ENTITIES_DIR_NAME = "entities"           # Default name for entity direc
 
 # --- Service Name Constants ---
 SERVICE_NAME_PREFIX = "mcp-"  # Prefix used for all Graphiti MCP service names
+DEFAULT_SERVICE_SUFFIX = ""  # Default suffix for the primary service ID in a project
 
 # --- ANSI Color Constants ---
 # ANSI escape codes used to color or format terminal output

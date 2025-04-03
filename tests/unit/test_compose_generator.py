@@ -15,12 +15,24 @@ from ruamel.yaml.comments import CommentedMap
 
 from graphiti_cli.logic import compose_generator
 from constants import (
+    # Configuration keys
+    CONFIG_KEY_SERVICES, CONFIG_KEY_ID, CONFIG_KEY_CONTAINER_NAME, 
+    CONFIG_KEY_PORT_DEFAULT, CONFIG_KEY_GROUP_ID, CONFIG_KEY_ENTITIES_DIR,
+    CONFIG_KEY_ENVIRONMENT, CONFIG_KEY_SYNC_CURSOR_MCP_CONFIG,
+    # Registry keys
+    REGISTRY_PROJECTS_KEY, REGISTRY_ROOT_DIR_KEY, REGISTRY_CONFIG_FILE_KEY, REGISTRY_ENABLED_KEY,
+    # Compose keys
+    COMPOSE_SERVICES_KEY, COMPOSE_CUSTOM_BASE_ANCHOR_KEY,
+    COMPOSE_CONTAINER_NAME_KEY, COMPOSE_PORTS_KEY, COMPOSE_ENVIRONMENT_KEY, COMPOSE_VOLUMES_KEY,
+    # Environment variables
+    ENV_MCP_GROUP_ID, ENV_MCP_USE_CUSTOM_ENTITIES, ENV_MCP_USE_CUSTOM_ENTITIES_VALUE, ENV_MCP_ENTITIES_DIR,
+    # Service name
+    SERVICE_NAME_PREFIX, DEFAULT_SERVICE_SUFFIX,
+    # Directory structure
+    DIR_AI, DIR_GRAPH, DIR_ENTITIES,
     BASE_COMPOSE_FILENAME,
     PROJECTS_REGISTRY_FILENAME,
     DOCKER_COMPOSE_OUTPUT_FILENAME,
-    COMPOSE_SERVICES_KEY,
-    COMPOSE_CUSTOM_BASE_ANCHOR_KEY,
-    COMPOSE_VOLUMES_KEY
 )
 
 # Sample YAML for testing
@@ -54,7 +66,7 @@ path/to/your/project/ai/graph/mcp-config.yaml
 
 PROJECT_CONFIG_YAML = """
 services:
-  - id: test-project-1-main
+  - id: test-project-1{DEFAULT_SERVICE_SUFFIX}
     entities_dir: entities
     port_default: 8001
     group_id: test-project-1-graph
@@ -162,7 +174,7 @@ class TestComposeGenerator:
         
         # Verify update_cursor_mcp_json was called
         mock_update_cursor.assert_called_once()
-        assert mock_update_cursor.call_args[0][1] == "test-project-1-main"  # server_id
+        assert mock_update_cursor.call_args[0][1] == f"test-project-1{DEFAULT_SERVICE_SUFFIX}"  # server_id
         assert mock_update_cursor.call_args[0][2] == 8001  # port
         
         # Verify the write_yaml_file was called
@@ -173,11 +185,11 @@ class TestComposeGenerator:
         compose_data = write_args[0]
         
         # Check for project service
-        assert "mcp-test-project-1-main" in compose_data[COMPOSE_SERVICES_KEY]
+        assert f"mcp-test-project-1{DEFAULT_SERVICE_SUFFIX}" in compose_data[COMPOSE_SERVICES_KEY]
         
         # Check service configuration
-        service = compose_data[COMPOSE_SERVICES_KEY]["mcp-test-project-1-main"]
-        assert service["container_name"] == "mcp-test-project-1-main"
+        service = compose_data[COMPOSE_SERVICES_KEY][f"mcp-test-project-1{DEFAULT_SERVICE_SUFFIX}"]
+        assert service["container_name"] == f"mcp-test-project-1{DEFAULT_SERVICE_SUFFIX}"
         assert service["ports"] == ["8001:${MCP_PORT}"]
         assert "environment" in service
         assert service["environment"]["MCP_GROUP_ID"] == "test-project-1-graph"
@@ -244,3 +256,15 @@ class TestComposeGenerator:
         # Only base services should exist
         assert len(compose_data[COMPOSE_SERVICES_KEY]) == 1
         assert "mcp-root" in compose_data[COMPOSE_SERVICES_KEY] 
+
+    # Create a mock MCP config file for a project
+    mock_project_config = {
+        CONFIG_KEY_SERVICES: [
+            # Minimal configuration
+            {
+                CONFIG_KEY_ID: f"test-project-1{DEFAULT_SERVICE_SUFFIX}",
+                CONFIG_KEY_GROUP_ID: "test-project-1",
+                CONFIG_KEY_ENTITIES_DIR: "entities"
+            }
+        ]
+    } 

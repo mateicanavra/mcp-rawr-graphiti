@@ -26,7 +26,9 @@ from constants import (
     # Directory structure
     DIR_AI, DIR_GRAPH, DIR_ENTITIES, FILE_GIT_KEEP, DIR_PROJECT_ASSETS,
     # Validation
-    REGEX_VALID_NAME
+    REGEX_VALID_NAME,
+    # Service name constants
+    DEFAULT_SERVICE_SUFFIX
 )
 from ..utils.yaml_utils import load_yaml_file
 from ..logic.project_registry import update_registry_logic
@@ -78,7 +80,7 @@ def init_project(project_name: str, target_dir: Path):
     config_path = graph_dir / CONFIG_FILENAME
     config_content = f"""# Configuration for project: {project_name}
 {CONFIG_KEY_SERVICES}:
-  - {CONFIG_KEY_ID}: {project_name}-main  # Service ID (used for default naming)
+  - {CONFIG_KEY_ID}: {project_name}{DEFAULT_SERVICE_SUFFIX}  # Service ID (used for default naming)
     # {CONFIG_KEY_CONTAINER_NAME}: "{DEFAULT_CUSTOM_CONTAINER_NAME}"  # Optional: Specify custom container name
     # {CONFIG_KEY_PORT_DEFAULT}: {DEFAULT_CUSTOM_PORT}             # Optional: Specify custom host port
     {CONFIG_KEY_GROUP_ID}: "{project_name}"       # Graph group ID

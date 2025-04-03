@@ -3,7 +3,7 @@
 This module defines the Tool entity, which represents tools used by agents or developers.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Tool(BaseModel):
@@ -26,6 +26,8 @@ class Tool(BaseModel):
     ## Output Format
     A Tool entity with fields populated according to explicitly available information.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     tool_id: str = Field(..., description="Unique identifier for the tool.")
     name: str = Field(..., description="Name of the tool.")

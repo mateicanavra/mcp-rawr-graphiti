@@ -5,7 +5,7 @@ This module provides a registry to manage entities in a modular way.
 
 from typing import Dict, Type
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # Global registry to store entities
 _ENTITY_REGISTRY: Dict[str, Type[BaseModel]] = {}

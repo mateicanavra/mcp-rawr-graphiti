@@ -3,7 +3,7 @@
 This module defines the Goal entity, which represents clearly stated objectives or goals.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Goal(BaseModel):
@@ -14,6 +14,8 @@ class Goal(BaseModel):
     2. Success indicators or measurable outcomes explicitly mentioned.
     3. Clearly track status, definition, and success criteria changes over time.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     goal_id: str = Field(..., description="Unique identifier for the goal.")
     description: str = Field(..., description="Detailed description of the goal.")

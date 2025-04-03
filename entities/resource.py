@@ -3,7 +3,7 @@
 This module defines the Resource entity, which represents assets or resources utilized by agents or projects.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Resource(BaseModel):
@@ -12,6 +12,8 @@ class Resource(BaseModel):
     Instructions for identifying and extracting resources:
     1. Specific tools, datasets, or other assets mentioned explicitly.
     """
+
+    model_config = ConfigDict(extra='forbid')
 
     id: str = Field(..., description="Resource ID (unique readable identifier).")
     name: str = Field(..., description="Resource name.")
