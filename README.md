@@ -295,6 +295,40 @@ path/to/your/project/ai/graph/entities/`)
 9.  Edit `user-profiles.yaml`...
 10. The `my-new-ai-project` is now registered in `mcp-projects.yaml` (in the repo root). If you re-run `graphiti compose` and `graphiti up -d` (from the repo root), a dedicated MCP server instance for this project might be started (depending on the base config).
 
+## Testing
+
+The project includes a comprehensive test suite to ensure reliability and prevent regressions:
+
+### Running Tests
+
+To run the tests, you'll need to install the development dependencies:
+
+```bash
+# Install the package with development dependencies
+pip install -e ".[dev]"
+```
+
+Then you can run the tests with pytest:
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage reporting
+pytest --cov=graphiti_cli
+
+# Run specific test categories
+pytest tests/unit/
+pytest tests/functional/
+```
+
+For more detailed information about running and writing tests, see [tests/README.md](tests/README.md).
+
+### Continuous Integration
+
+This project uses GitHub Actions to automatically run tests on push and pull request operations.
+The workflow runs tests on multiple Python versions and generates coverage reports.
+
 ## Development Notes
 
 *   **Generating `uv.lock`:** If the `uv.lock` file is missing or out of date, you can regenerate it from `pyproject.toml` using:
