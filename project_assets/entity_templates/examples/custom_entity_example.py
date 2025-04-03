@@ -37,4 +37,4 @@ class Product(BaseModel):
     category: str = Field(
         ...,
         description='The category the product belongs to (e.g., "Electronics", "Software", "Service") based on the text.',
-    ) 
+    )
