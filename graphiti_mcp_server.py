@@ -889,6 +889,14 @@ async def initialize_server() -> MCPConfig:
         default=os.environ.get('GRAPHITI_LOG_LEVEL', 'info').lower(),  # Default to ENV or 'info'
         help='Set the logging level.'
     )
+    # --- NEW: Argument to control loading of root/base entities ---
+    parser.add_argument(
+        '--include-root-entities',
+        type=str, # Read as string "true" or "false" from env var
+        default="true", # Default to including root entities
+        help='Set to "false" to prevent loading entities from the root /app/entities directory.'
+    )
+    # --- End NEW ---
 
     args = parser.parse_args()
 
@@ -907,13 +915,19 @@ async def initialize_server() -> MCPConfig:
     # Define the expected path for base entities within the container
     container_base_entity_dir = "/app/entities"
     
-    # Always load base entities first
-    if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):
-        logger.info(f'Loading base entities from: {container_base_entity_dir}')
-        # --- MODIFIED: Always load all base entities ---
-        load_entities_from_directory(container_base_entity_dir, "")
+    # --- MODIFIED: Conditionally load base entities based on --include-root-entities ---
+    # Convert the string argument to boolean (case-insensitive comparison to "true")
+    should_include_root = args.include_root_entities.lower() == "true"
+
+    if should_include_root:
+        if os.path.exists(container_base_entity_dir) and os.path.isdir(container_base_entity_dir):
+            logger.info(f'Loading root entities from: {container_base_entity_dir}')
+            load_entities_from_directory(container_base_entity_dir, "") # Load all from root
+        else:
+            logger.warning(f"Root entities directory specified but not found at: {container_base_entity_dir}")
     else:
-        logger.warning(f"Base entities directory not found at: {container_base_entity_dir}")
+        logger.info("Skipping loading of root entities based on --include-root-entities=false.")
+    # --- End Modification ---
     
     # Load project-specific entities if directory is specified and different from base
     if args.entities_dir:
