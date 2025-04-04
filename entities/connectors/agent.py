@@ -4,6 +4,7 @@ This module defines the Agent entity, which represents an AI agent persona or ro
 """
 
 from pydantic import BaseModel, Field, ConfigDict
+from ..base.metadata import BaseMetadata # Import the new base metadata model
 
 
 class Agent(BaseModel):
@@ -19,7 +20,7 @@ class Agent(BaseModel):
     id: str = Field(..., description="Unique identifier for the agent.")
     name: str = Field(..., description="Human-readable name of the agent.")
     role: str = Field(..., description="Role or function of the agent within the system.")
-    metadata: dict = Field(default_factory=dict, description="Optional metadata for extensibility.")
+    metadata: BaseMetadata = Field(default_factory=BaseMetadata, description="Optional structured metadata for extensibility.")
     tools: list[str] = Field(default_factory=list, description="List of tools or capabilities the agent has.")
     capabilities: list[str] = Field(default_factory=list, description="List of capabilities or functions the agent can perform.")
     limitations: list[str] = Field(default_factory=list, description="List of limitations or constraints the agent has.")

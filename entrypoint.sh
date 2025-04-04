@@ -14,7 +14,7 @@ CMD_ARGS="--transport sse" # Common arguments
 
 # --group-id (Required or has default handling in script?)
 if [ -n "$MCP_GROUP_ID" ]; then
-  CMD_ARGS="$CMD_ARGS --group-id \"$MCP_GROUP_ID\""
+  CMD_ARGS="$CMD_ARGS --group-id $MCP_GROUP_ID"
 else
   echo "Warning: MCP_GROUP_ID environment variable not set."
   # Decide: exit 1? Or let the python script handle default/error?
