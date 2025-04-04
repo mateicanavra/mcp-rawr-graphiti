@@ -16,8 +16,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict, Union, cast
 
+import traceback  # Added for detailed error logging
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from pydantic import ValidationError  # Added for specific error handling
 from pydantic import BaseModel, Field
 
 from graphiti_core import Graphiti
@@ -323,10 +325,14 @@ async def add_episode(
 
     Args:
         name (str): Name of the episode
-        episode_body (str): The content of the episode, always provided as a string.
-                           If format='json', this string must be valid JSON.
+        episode_body (str): The content of the episode. **IMPORTANT:** This argument MUST always be provided as a JSON string literal
+                           within the tool call's `arguments` JSON object, regardless of the `format` specified.
+                           - If `format='json'`, this string must contain valid JSON data. The server will parse it internally.
+                           - If `format='text'` or `format='message'`, this string contains the raw text/message content.
+                           Failure to provide `episode_body` as a string literal (e.g., providing a direct JSON array/object)
+                           will cause a validation error because the calling environment might pre-parse it.
         group_id (str, optional): A unique ID for this graph. Defaults to config.
-        format (str, optional): How to interpret episode_body ('text', 'json', 'message'). Defaults to 'text'.
+        format (str, optional): How to interpret the `episode_body` string ('text', 'json', 'message'). Defaults to 'text'.
         source_description (str, optional): Description of the source.
         uuid (str, optional): Optional UUID for the episode.
         entity_subset (list[str], optional): Optional list of entity names to use.
@@ -410,10 +416,22 @@ async def add_episode(
                 await client.build_communities()
 
                 logger.info(f"[BG Task - {group_id_str}] Successfully processed episode '{name}'")
-            except Exception as e:
-                error_msg = str(e)
+            except ValidationError as ve:
+                # Format Pydantic validation errors for better readability
+                error_details = []
+                for error in ve.errors():
+                    loc = " -> ".join(map(str, error["loc"]))
+                    msg = error["msg"]
+                    inp = error.get("input", "N/A") # Get input if available
+                    error_details.append(f"  Field: '{loc}', Input: {inp!r}, Error: {msg}")
+                formatted_errors = "\n".join(error_details)
                 logger.error(
-                    f"[BG Task - {group_id_str}] Error processing episode '{name}': {error_msg}"
+                    f"[BG Task - {group_id_str}] Pydantic Validation Error processing episode '{name}':\n{formatted_errors}\n--- Traceback ---\n{traceback.format_exc()}"
+                )
+            except Exception as e:
+                # Catch other exceptions
+                logger.error(
+                    f"[BG Task - {group_id_str}] Unexpected Error processing episode '{name}': {e}\n--- Traceback ---\n{traceback.format_exc()}"
                 )
                 # Optionally, you could implement a way to notify the client of background errors
 
