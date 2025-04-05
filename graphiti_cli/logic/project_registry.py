@@ -4,6 +4,7 @@ Project registry utilities for the Graphiti CLI.
 Contains functions for managing the central project registry,
 which maps project names to their configuration details.
 """
+import os
 from pathlib import Path
 from typing import Dict, Any
 
@@ -21,14 +22,14 @@ REGISTRY_HEADER_LINES = [
     "# !! Avoid manual edits unless absolutely necessary.                 !!",
     "#",
     "# Maps project names to their configuration details.",
-    "# Paths should be absolute for reliability.",
+    "# Paths should be relative to this file's location (repo root).",
 ]
 
 def update_registry_logic(
     registry_file: Path,
     project_name: str,
-    root_dir: Path,  # Expecting resolved absolute path
-    config_file: Path,  # Expecting resolved absolute path
+    root_dir: Path,  # Project root directory path (can be relative or absolute)
+    config_file: Path,  # Project config file path (can be relative or absolute)
     enabled: bool = True
 ) -> bool:
     """
@@ -37,20 +38,32 @@ def update_registry_logic(
     Args:
         registry_file (Path): Path to the registry file
         project_name (str): Name of the project
-        root_dir (Path): Absolute path to the project root directory
-        config_file (Path): Absolute path to the project config file
+        root_dir (Path): Path to the project root directory (will be stored relative to registry_file)
+        config_file (Path): Path to the project config file (will be stored relative to registry_file)
         enabled (bool): Whether the project should be enabled
         
     Returns:
         bool: True if successful, False otherwise
     """
     print(f"Updating registry '{registry_file}' for project '{project_name}'")
-    if not root_dir.is_absolute() or not config_file.is_absolute():
-        print("Error: Project root_dir and config_file must be absolute paths.")
+    # Resolve paths relative to the registry file's directory (repo root)
+    # This ensures consistency even if absolute paths are passed in.
+    registry_dir = registry_file.parent.resolve()
+    root_dir_abs = root_dir.resolve()
+    config_file_abs = config_file.resolve()
+
+    try:
+        root_dir_relative = os.path.relpath(root_dir_abs, start=registry_dir)
+        config_file_relative = os.path.relpath(config_file_abs, start=registry_dir)
+    except ValueError as e:
+        print(f"{RED}Error calculating relative paths (are paths on different drives?): {e}{NC}")
+        print(f"  Registry Dir: {registry_dir}")
+        print(f"  Root Dir Abs: {root_dir_abs}")
+        print(f"  Config File Abs: {config_file_abs}")
         return False
 
-    if not config_file.exists():
-        print(f"Warning: Project config file '{config_file}' does not exist.")
+    if not config_file_abs.exists():
+        print(f"{YELLOW}Warning: Project config file '{config_file_abs}' does not exist (using path '{config_file_relative}').{NC}")
         # Allow continuing for init scenarios
 
     # Create registry file with header if it doesn't exist
@@ -81,8 +94,8 @@ def update_registry_logic(
 
     # Add or update the project entry (convert Paths to strings for YAML)
     project_entry = {
-        REGISTRY_ROOT_DIR_KEY: str(root_dir),
-        REGISTRY_CONFIG_FILE_KEY: str(config_file),
+        REGISTRY_ROOT_DIR_KEY: root_dir_relative,
+        REGISTRY_CONFIG_FILE_KEY: config_file_relative,
         REGISTRY_ENABLED_KEY: enabled
     }
     data[REGISTRY_PROJECTS_KEY][project_name] = project_entry
