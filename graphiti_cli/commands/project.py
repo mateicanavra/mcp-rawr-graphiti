@@ -118,8 +118,8 @@ def init_project(project_name: str, target_dir: Path):
         success = update_registry_logic(
             registry_file=registry_path,
             project_name=project_name,
-            root_dir=target_dir.resolve(),
-            config_file=config_path.resolve(),
+            root_dir=target_dir,  # Pass relative path
+            config_file=config_path, # Pass relative path
             enabled=True
         )
         if not success:

@@ -168,7 +168,8 @@ def generate_compose_logic(
             env_vars[ENV_MCP_USE_CUSTOM_ENTITIES] = ENV_MCP_USE_CUSTOM_ENTITIES_VALUE # Default to True
 
             # --- NEW: Determine volume mount path and selection spec based on entities_dir_config type ---
-            abs_host_entity_path = None
+            host_entity_path_rel_project = None # Path relative to project_root_dir for volume mount
+            abs_host_entity_path = None # Absolute path for existence checks
             selection_spec = ""
             valid_config = True
             base_graph_path = project_root_dir / DIR_AI / DIR_GRAPH
@@ -176,8 +177,10 @@ def generate_compose_logic(
             if isinstance(entities_dir_config, str):
                 # Single directory specified (load all)
                 relative_path = Path(entities_dir_config) # Relative to ai/graph/
-                abs_host_entity_path = (base_graph_path / relative_path).resolve()
-                if not abs_host_entity_path.is_dir():
+                # Path relative to project root
+                host_entity_path_rel_project = Path(DIR_AI) / DIR_GRAPH / relative_path
+                abs_host_entity_path = project_root_dir / host_entity_path_rel_project # Keep absolute path for existence check
+                if not abs_host_entity_path.is_dir(): # Check absolute path
                     # Add project_name context
                     print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): Entity directory '{abs_host_entity_path}' does not exist. Volume mount might fail.{NC}")
                 selection_spec = "" # Load all within the mounted dir
@@ -189,14 +192,19 @@ def generate_compose_logic(
                     # Add project_name context
                     print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): Empty list provided for '{PROJECT_ENTITIES_DIR_KEY}'. Defaulting to loading all from '{DIR_ENTITIES}'.{NC}")
                     relative_path = Path(DIR_ENTITIES) # Use constant DIR_ENTITIES
-                    abs_host_entity_path = (base_graph_path / relative_path).resolve()
+                    # Path relative to project root
+                    host_entity_path_rel_project = Path(DIR_AI) / DIR_GRAPH / relative_path
+                    abs_host_entity_path = project_root_dir / host_entity_path_rel_project # Keep absolute path for existence check
                     if not abs_host_entity_path.is_dir():
                          # Add project_name context
-                         print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): Default entity directory '{abs_host_entity_path}' does not exist.{NC}")
+                         print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): Default entity directory '{abs_host_entity_path}' does not exist.{NC}") # Check absolute path
                     selection_spec = ""
                 else:
                     # Process the list
-                    absolute_paths = [(base_graph_path / p).resolve() for p in entities_dir_config]
+                    # Keep absolute paths for commonpath logic and existence checks for now
+                    absolute_paths = [(project_root_dir / DIR_AI / DIR_GRAPH / p).resolve() for p in entities_dir_config]
+                    # Store relative paths for volume mount construction
+                    relative_paths_to_project = [Path(DIR_AI) / DIR_GRAPH / p for p in entities_dir_config]
 
                     # Find common parent directory (absolute)
                     try:
@@ -223,7 +231,20 @@ def generate_compose_logic(
 
 
                     if valid_config:
-                        abs_host_entity_path = common_parent_abs # Mount the common parent
+                        abs_host_entity_path = common_parent_abs # Keep absolute path for checks
+                        # Determine the common parent relative to project root for volume mount
+                        try:
+                            # Use string representations of relative paths for commonpath
+                            common_parent_rel_project = Path(os.path.commonpath([str(p) for p in relative_paths_to_project]))
+                            # Check if the common path itself exists and is a directory relative to project_root_dir
+                            if not (project_root_dir / common_parent_rel_project).is_dir():
+                                 common_parent_rel_project = common_parent_rel_project.parent # Use parent if needed
+                            host_entity_path_rel_project = common_parent_rel_project
+                        except ValueError:
+                             # This should have been caught earlier, but handle defensively
+                             print(f"{RED}Internal Error (Project: '{project_name}', Service: '{service_name}'): Could not determine relative common parent path.{NC}")
+                             valid_config = False # Mark as invalid if relative path fails
+                             host_entity_path_rel_project = None # Ensure it's None
 
                         # Extract subdirs and validate existence
                         subdirs_to_select = []
@@ -297,12 +318,19 @@ def generate_compose_logic(
                 new_service[COMPOSE_VOLUMES_KEY] = []
 
             # --- MODIFIED: Append the entity volume mount using determined path ---
-            if abs_host_entity_path: # Check if path was determined successfully
-                new_service[COMPOSE_VOLUMES_KEY].append(f"{abs_host_entity_path}:{PROJECT_CONTAINER_ENTITY_PATH}:ro")
-            else:
-                 # This case should be caught by valid_config check, but as a safeguard:
-                 # Add project_name context
-                 print(f"{RED}Internal Error (Project: '{project_name}', Service: '{service_name}'): Could not determine entity path for volume mount. Skipping volume mount.{NC}")
+            # --- MODIFIED: Append the entity volume mount using determined relative path and placeholder ---
+            if valid_config and host_entity_path_rel_project: # Check validity and if relative path was determined
+                # Use POSIX path separators for consistency in the compose file
+                host_path_str = host_entity_path_rel_project.as_posix()
+                # Use mandatory environment variable placeholder
+                # Ensure PROJECT_ROOT_DIR is defined in the environment where docker-compose runs
+                volume_string = f"${{PROJECT_ROOT_DIR:?PROJECT_ROOT_DIR environment variable must be set}}/{host_path_str}:{PROJECT_CONTAINER_ENTITY_PATH}:ro"
+                new_service[COMPOSE_VOLUMES_KEY].append(volume_string)
+            elif valid_config and not host_entity_path_rel_project:
+                 # This might happen if logic determines no mount is needed (e.g., empty list handled differently)
+                 # Or if there was an internal error determining the relative path
+                 print(f"{YELLOW}Warning (Project: '{project_name}', Service: '{service_name}'): No host entity path determined for volume mount. Skipping mount.{NC}")
+            # else: # valid_config is False, error already printed
 
             # --- Add to Services Map ---
             services_map[service_name] = new_service
