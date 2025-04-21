@@ -1,6 +1,6 @@
 # Graphiti MCP Server • Fast Multi‑Project Knowledge Graphs
 
-*Fork & extension of the official [**`getzep/graphiti`** MCP server]—adding multi‑server, single‑DB support and a DX‑focused CLI.*
+*Fork & extension of the official [****`getzep/graphiti`****\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\* MCP server]—adding multi‑server, single‑DB support and a DX‑focused CLI.*
 
 > **Build per‑project temporal knowledge graphs that your AI agents can query over the [Model Context Protocol]—all in one command.**
 
@@ -35,7 +35,8 @@ If your workload is small and homogeneous you *can* run a single server—just c
 pipx install 'rawr-mcp-graphiti[cli]'  # or: git clone && pipx install .
 #   ↳ Once installed, the `graphiti` command is available globally from any directory.
 
-# 2 · Generate compose + IDE configs (run **once** from the repo root)
+# 2 · Generate compose + IDE configs
+#    (can be run from **any** directory — the CLI locates your repo automatically)
 cd rawr-mcp-graphiti
 graphiti compose              # reads mcp-projects.yaml
 
@@ -43,13 +44,14 @@ graphiti compose              # reads mcp-projects.yaml
 graphiti up -d                # ports 8000, 8001, …
 
 # 4 · Init a new project
-graphiti init my‑agent‐proj   # writes mcp-config.yaml, updates compose
+cd path/to/my‑kg        # switch to the project repo root
+graphiti init [my-kg]   # writes mcp-config.yaml here
 
 # 5 · Reload only that project
-graphiti reload graphiti‑mcp‑my‑agent‑proj
+graphiti reload mcp-my-kg
 ```
 
-When the containers are up you can:
+Once containers are running you can:
 
 - Hit `http://localhost:8000/status` for a health check.
 - Open Neo4j browser at `http://localhost:7474` (credentials in `.env`).
@@ -111,7 +113,7 @@ cd acme‑support‑bot
 # add entity YAMLs under ai/graph/entities/*.yaml
 ```
 
-Return to the repo root, rerun `graphiti compose && graphiti up -d`.  A new server starts on the next port with `group_id=acme-support-bot`.
+From anywhere on your machine, run `graphiti compose && graphiti up -d` to pick up the new project.  A new server starts on the next port with `group_id=acme-support-bot`.
 
 ---
 
