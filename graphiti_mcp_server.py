@@ -325,12 +325,10 @@ async def add_episode(
 
     Args:
         name (str): Name of the episode
-        episode_body (str): The content of the episode. **IMPORTANT:** This argument MUST always be provided as a JSON string literal
-                           within the tool call's `arguments` JSON object, regardless of the `format` specified.
-                           - If `format='json'`, this string must contain valid JSON data. The server will parse it internally.
-                           - If `format='text'` or `format='message'`, this string contains the raw text/message content.
-                           Failure to provide `episode_body` as a string literal (e.g., providing a direct JSON array/object)
-                           will cause a validation error because the calling environment might pre-parse it.
+        episode_body (str): Supply the episode as **one stringified JSON blob**.
+                           • Triple‑escape all quotes so the inner JSON is valid inside the outer JSON args.
+                           • If format='json' → string must contain valid JSON.
+                           • If format='text' | 'message' → string is treated as raw text.
         group_id (str, optional): A unique ID for this graph. Defaults to config.
         format (str, optional): How to interpret the `episode_body` string ('text', 'json', 'message'). Defaults to 'text'.
         source_description (str, optional): Description of the source.
