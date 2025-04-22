@@ -69,6 +69,7 @@ def generate_compose_logic(
     output_compose_path = repo_root / DOCKER_COMPOSE_OUTPUT_FILENAME
 
     # Load base compose file
+    # Use safe=False (round-trip) here as base_compose uses anchors/merge keys
     compose_data = load_yaml_file(base_compose_path, safe=False)
     if compose_data is None or not isinstance(compose_data, dict):
         print(f"Error: Failed to load or parse base compose file: {base_compose_path}")

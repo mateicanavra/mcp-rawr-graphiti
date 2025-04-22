@@ -63,7 +63,8 @@ def update_registry_logic(
             return False  # Error handled in write_yaml_file
 
     # Load existing registry data
-    data = load_yaml_file(registry_file, safe=False)
+    # Use safe=True as this file might be user-edited or live outside the repo
+    data = load_yaml_file(registry_file, safe=True)
     if data is None:
         print(f"Error: Could not load registry file {registry_file}")
         return False
