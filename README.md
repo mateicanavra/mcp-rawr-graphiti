@@ -90,6 +90,12 @@ path/to/your/project/ai/graph/entities/` inside a project. Mount‑only volumes 
 git clone https://github.com/rawr-ai/mcp-graphiti.git
 cd mcp-graphiti
 cp .env.example .env   # add Neo4j creds & OpenAI key
+> **Important Security Note:** The application includes a security check to prevent the use of the default Neo4j password (`'password'`) in production environments.
+>
+> *   If `NEO4J_PASSWORD` is set to `'password'`, the server will **refuse to start** and raise an error *unless* the `GRAPHITI_ENV` environment variable is explicitly set to `'dev'` or `'development'`.
+> *   For any deployment other than local development, you **must** set `NEO4J_PASSWORD` to a strong, unique password in your `.env` file.
+> *   Setting `GRAPHITI_ENV=dev` bypasses this check *only* for facilitating local development setups. Do **not** use `GRAPHITI_ENV=dev` in production.
+
 ```
 
 ### 2. Install the CLI
@@ -114,6 +120,19 @@ cd acme‑support‑bot
 ```
 
 From anywhere on your machine, run `graphiti compose && graphiti up -d` to pick up the new project.  A new server starts on the next port with `group_id=acme-support-bot`.
+
+
+### Project Configuration (`mcp-projects.yaml`)
+
+The `mcp-projects.yaml` file at the repository root is used to define and manage the individual projects that the `graphiti` CLI tools will recognize and manage. It allows you to configure multiple, isolated Graphiti MCP server instances running against a single Neo4j database.
+
+Key points:
+
+*   **Project Definitions:** This file lists the projects, specifying details like their root directory path (relative to the repository root) and any specific configurations.
+*   **`.gitignore` Default:** By default, `mcp-projects.yaml` is included in the `.gitignore` file. This prevents accidental commits of potentially private project lists, especially in public forks or clones of this repository.
+*   **Managing Private Projects:** If you are using this repository structure to manage your own private projects, you should remove the `mcp-projects.yaml` entry from your local `.gitignore` file.
+
+The `graphiti compose` command reads this file to generate the necessary `docker-compose.yml` configuration.
 
 ---
 

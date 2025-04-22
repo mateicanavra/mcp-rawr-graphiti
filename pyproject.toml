@@ -27,7 +27,7 @@ dev = [
 graphiti = "graphiti_cli.main:app"
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=70.0"]
 build-backend = "setuptools.build_meta"
 
 # Explicitly specify packages to include

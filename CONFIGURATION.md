@@ -19,12 +19,12 @@ path/to/your/project/ai/graph/mcp-config.yaml`                |
 ```yaml
 # mcp-projects.yaml
 projects:
-  magic-candidates:
-    root_dir: path/to/your/project/
+  project-A:
+    root_dir: /path/to/your/project
 path/to/your/project/ai/graph/mcp-config.yaml
     enabled: true
-  civ7-mods:
-    root_dir: path/to/your/project/
+  project-B:
+    root_dir: /path/to/your/project
 path/to/your/project/ai/graph/mcp-config.yaml
     enabled: true
 ```
@@ -53,8 +53,8 @@ The configuration is structured under the `services` key, which is a list of ser
 ```yaml
 path/to/your/project/ai/graph/mcp-config.yaml
 services:
-  - id: magic-candidates # Service ID
-    group_id: "magic-candidates" # Graph group ID
+  - id: project-A # Service ID
+    group_id: "project-A" # Graph group ID
     # Load only entities from 'entities' subdir relative to ai/graph/
     entities_dir: "entities"
     # Prevent loading base /app/entities
@@ -109,6 +109,13 @@ These variables in the `.env` file configure shared services (like Neo4j) or pro
 | `OPENAI_BASE_URL`          | Base URL for the OpenAI API (or compatible alternative).                                                | string | `https://api.openai.com/v1`  | No       | `OPENAI_BASE_URL=http://localhost:1234/v1`     |
 | `MODEL_NAME`               | Default LLM model name used by MCP servers if not overridden.                                           | string | `gpt-4o`                     | No       | `MODEL_NAME=gpt-3.5-turbo`                     |
 | `GRAPHITI_LOG_LEVEL`       | Default log level for *all* MCP servers (root and project) unless overridden by specific configuration. | string | `info`                       | No       | `GRAPHITI_LOG_LEVEL=debug`                     |
+| `GRAPHITI_ENV`             | Sets the operating environment. If set to `dev` or `development`, allows using the default Neo4j password (`'password'`) for local setup. **Do not use `dev` in production.** | string | `production` (implied) | No       | `GRAPHITI_ENV=dev`                             |
 | `MCP_GRAPHITI_REPO_PATH`   | Explicit path to the repository root (usually auto-detected by the CLI).                                | string | Auto-detected                | No       | `MCP_GRAPHITI_REPO_PATH=/path/to/repo`         |
 
 *Required if using OpenAI-based features.*
+
+**Security Note on `NEO4J_PASSWORD`:**
+
+*   For security reasons, the application will **refuse to start** if `NEO4J_PASSWORD` is set to the default value `'password'`.
+*   This check is bypassed **only** if the `GRAPHITI_ENV` variable (see table above) is explicitly set to `'dev'` or `'development'`, intended solely for local development setups.
+*   **Never** use the default password or set `GRAPHITI_ENV=dev` in production or any non-development environment. Always use a strong, unique password for `NEO4J_PASSWORD`.

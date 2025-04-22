@@ -7,19 +7,16 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Set the working directory in the container
 WORKDIR /app
 
-# Install curl, install uv, add its dir to the current PATH, and verify in one step
-RUN apt-get update && apt-get install -y curl \
+# Install curl (needed for the container health‑check) and a *pinned* version of
+# uv.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    # Install uv
+    && pip install --no-cache-dir uv==0.6.14 \
+    # Verify installation
+    && uv --version \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    # Install uv using the recommended installer script
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \
-    # Add uv's ACTUAL installation directory to the PATH for this RUN command's shell
-    && export PATH="/root/.local/bin:${PATH}" \
-    # Verify uv installation within the same RUN command
-    && uv --version
-
-# Add uv's ACTUAL installation directory to the ENV PATH for subsequent stages and the final image
-ENV PATH="/root/.local/bin:${PATH}"
+    && rm -rf /var/lib/apt/lists/*
 
 # --- Build Stage ---
 # Use a build stage to install dependencies
@@ -53,8 +50,8 @@ FROM base
 
 # Copy installed dependencies from the builder stage
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-# Also copy binaries installed by dependencies (like uv itself if installed via pip in builder)
-COPY --from=builder /root/.local/bin /root/.local/bin
+# Binaries installed with the dependencies (if any) live in /usr/local/bin which is
+# already present in the base stage, so no extra COPY step is required.
 
 # Copy application code
 COPY graphiti_mcp_server.py ./
@@ -65,10 +62,26 @@ COPY entrypoint.sh .
 # Make entrypoint script executable
 RUN chmod +x ./entrypoint.sh
 
+# --------------------------------------------------
+# Security hardening – drop root privileges
+# --------------------------------------------------
+# 1. Create an unprivileged user *after* all packages are installed.
+# 2. Give it ownership over /app so the process can write logs, etc.
+# 3. Switch to that user for the remainder of the image lifetime.
+
+RUN useradd --create-home --shell /usr/sbin/nologin --uid 1000 graphiti \
+    && chown -R graphiti:graphiti /app
+
+USER graphiti
+WORKDIR /app
+
 # Expose the default MCP port (adjust if needed)
 EXPOSE 8000
 
-# Set the entrypoint script to run when the container starts
+# --------------------------------------------------
+# Entrypoint / default command
+# --------------------------------------------------
+
 ENTRYPOINT ["./entrypoint.sh"]
 
 # Default command can be overridden (e.g., to specify group_id)

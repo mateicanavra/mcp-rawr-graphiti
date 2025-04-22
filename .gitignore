@@ -1,3 +1,6 @@
+# WARNING: For PRIVATE projects, remove 'mcp-projects.yaml' from this .gitignore file so it is tracked by Git.
+# For public/shared projects, keep 'mcp-projects.yaml' ignored to avoid leaking sensitive paths or configuration.
+
 # Python
 __pycache__/
 *.py[cod]
