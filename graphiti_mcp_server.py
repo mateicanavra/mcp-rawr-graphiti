@@ -111,14 +111,32 @@ class GraphitiConfig(BaseModel):
     @classmethod
     def from_env(cls) -> 'GraphitiConfig':
         """Create a configuration instance from environment variables."""
+        neo4j_uri = os.environ.get('NEO4J_URI', 'bolt://neo4j:7687')
+        neo4j_user = os.environ.get('NEO4J_USER', 'neo4j')
+        neo4j_password = os.environ.get('NEO4J_PASSWORD', 'password')
+        openai_api_key = os.environ.get('OPENAI_API_KEY')
+        openai_base_url = os.environ.get('OPENAI_BASE_URL')
+        model_name = os.environ.get('MODEL_NAME')
+
+        # Environment context check for password hardening
+        # Use GRAPHITI_ENV if set, else treat as non-dev
+        env_context = os.environ.get('GRAPHITI_ENV', '').lower()
+        if (
+            neo4j_password == 'password'
+            and env_context not in ('dev', 'development')
+        ):
+            raise ValueError(
+                "Default Neo4j password 'password' is insecure and not allowed in non-development environments. "
+                "Set a strong NEO4J_PASSWORD."
+            )
+
         return cls(
-            # neo4j_uri=os.environ.get('NEO4J_URI', 'bolt://localhost:7687'),
-            neo4j_uri=os.environ.get('NEO4J_URI', 'bolt://neo4j:7687'),
-            neo4j_user=os.environ.get('NEO4J_USER', 'neo4j'),
-            neo4j_password=os.environ.get('NEO4J_PASSWORD', 'password'),
-            openai_api_key=os.environ.get('OPENAI_API_KEY'),
-            openai_base_url=os.environ.get('OPENAI_BASE_URL'),
-            model_name=os.environ.get('MODEL_NAME'),
+            neo4j_uri=neo4j_uri,
+            neo4j_user=neo4j_user,
+            neo4j_password=neo4j_password,
+            openai_api_key=openai_api_key,
+            openai_base_url=openai_base_url,
+            model_name=model_name,
         )
 
 
