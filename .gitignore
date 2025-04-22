@@ -53,7 +53,7 @@ logs/
 htmlcov/
 
 # Repomix
-rawr-mcp-graphiti-repo.md
+repomix-output.md
 
 # Config
 mcp-projects.yaml
