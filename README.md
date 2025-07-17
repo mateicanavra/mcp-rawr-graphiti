@@ -10,8 +10,10 @@
 
 ```bash
 # 1 · Install the CLI
-pipx install rawr-mcp-graphiti   # or: git clone && pipx install .
-#   ↳ Once installed, the `graphiti` command is available globally from any directory.
+pipx install 'git+https://github.com/rawr-ai/mcp-graphiti.git'
+#   ↳ rawr-mcp-graphiti isn't on PyPI yet; this installs straight from Git.
+#     We'll publish the package soon. Once installed, the `graphiti` command
+#     is available globally from any directory.
 
 # 2 · Generate compose + IDE configs
 #    (can be run from **any** directory — the CLI locates your repo automatically)
@@ -101,7 +103,7 @@ cp .env.example .env   # add Neo4j creds & OpenAI key
 
 ### 2. Install the CLI
 
-*Users* — `pipx install rawr-mcp-graphiti`\
+*Users* — `pipx install 'git+https://github.com/rawr-ai/mcp-graphiti.git'`  # install from Git until published
 *Contributors* — `python -m venv .venv && source .venv/bin/activate && uv pip sync uv.lock && pip install -e .`
 
 ### 3. Spin it up
