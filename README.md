@@ -6,6 +6,37 @@
 
 ---
 
+## Quick Start
+
+```bash
+# 1 · Install the CLI
+pipx install rawr-mcp-graphiti   # or: git clone && pipx install .
+#   ↳ Once installed, the `graphiti` command is available globally from any directory.
+
+# 2 · Generate compose + IDE configs
+#    (can be run from **any** directory — the CLI locates your repo automatically)
+cd rawr-mcp-graphiti
+graphiti compose              # reads mcp-projects.yaml
+
+# 3 · Launch services (Neo4j + servers)
+graphiti up -d                # ports 8000, 8001, …
+
+# 4 · Init a new project
+cd path/to/my-kg        # switch to the project repo root
+graphiti init [my-kg]   # writes mcp-config.yaml here
+
+# 5 · Reload only that project
+graphiti reload mcp-my-kg
+```
+
+Once containers are running you can:
+
+- Hit `http://localhost:8000/status` for a health check.
+- Open Neo4j browser at `http://localhost:7474` (credentials in `.env`).
+- Point any MCP-compatible client to `http://localhost:800{N}/sse`.
+
+---
+
 ## Why this repo exists
 
 Graphiti already turns unstructured text into a **temporal graph** stored in Neo4j—each server ingests text, extracts entities & relationships via LLMs, and records every change as time‑stamped episodes so agents can ask versioned questions, but most IDEs and agent frameworks (Cursor, VS Code, LangGraph, Autogen, …) speak **MCP**—they expect an HTTP/SSE endpoint that they can list in a `mcp.json` file.\
@@ -28,36 +59,6 @@ If your workload is small and homogeneous you *can* run a single server—just c
 
 ---
 
-## Five‑second tour
-
-```bash
-# 1 · Install CLI (isolated)
-pipx install 'rawr-mcp-graphiti[cli]'  # or: git clone && pipx install .
-#   ↳ Once installed, the `graphiti` command is available globally from any directory.
-
-# 2 · Generate compose + IDE configs
-#    (can be run from **any** directory — the CLI locates your repo automatically)
-cd rawr-mcp-graphiti
-graphiti compose              # reads mcp-projects.yaml
-
-# 3 · Launch services (Neo4j + servers)
-graphiti up -d                # ports 8000, 8001, …
-
-# 4 · Init a new project
-cd path/to/my‑kg        # switch to the project repo root
-graphiti init [my-kg]   # writes mcp-config.yaml here
-
-# 5 · Reload only that project
-graphiti reload mcp-my-kg
-```
-
-Once containers are running you can:
-
-- Hit `http://localhost:8000/status` for a health check.
-- Open Neo4j browser at `http://localhost:7474` (credentials in `.env`).
-- Point any MCP‑compatible client to `http://localhost:800{N}/sse`.
-
----
 
 ## How it works under the hood
 
@@ -100,8 +101,8 @@ cp .env.example .env   # add Neo4j creds & OpenAI key
 
 ### 2. Install the CLI
 
-*Users* (recommended) — `pipx install . --include-deps`\
-*Contributors* — `python -m venv .venv && source .venv/bin/activate && uv pip sync uv.lock && pip install -e .`
+*Users* — `pipx install rawr-mcp-graphiti`\
+*Contributors* — `python -m venv .venv && source .venv/bin/activate && uv pip sync uv.lock && pip install -e .`
 
 ### 3. Spin it up
 
