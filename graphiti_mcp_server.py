@@ -26,7 +26,7 @@ from graphiti_core import Graphiti
 from graphiti_core.edges import EntityEdge
 from graphiti_core.llm_client import LLMClient
 from graphiti_core.llm_client.config import LLMConfig
-from graphiti_core.llm_client.openai_client import OpenAIClient
+from graphiti_core.llm_client.openai_generic_client import OpenAIGenericClient as OpenAIClient
 from graphiti_core.nodes import EpisodeType, EpisodicNode
 from graphiti_core.search.search_config_recipes import (
     NODE_HYBRID_SEARCH_NODE_DISTANCE,
@@ -36,6 +36,11 @@ from graphiti_core.search.search_filters import SearchFilters
 from graphiti_core.utils.maintenance.graph_data_operations import clear_data
 from entities import get_entities, get_entity_subset, register_entity
 from constants import DEFAULT_LOG_LEVEL, DEFAULT_LLM_MODEL, ENV_GRAPHITI_LOG_LEVEL
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+import requests
+
+app = FastAPI()
 
 load_dotenv()
 
@@ -1142,6 +1147,74 @@ def load_entities_from_directory(directory_path: str, subdir_selection_spec: str
     logger.info(f"Finished loading entities for path '{directory_path}'. Total registered entities: {final_count}")
     if final_count > 0:
         logger.debug(f"Currently registered entities: {list(get_entities().keys())}")
+
+
+def ask_ollama(prompt: str) -> str:
+    try:
+        response = requests.post(
+            "http://192.168.100.20:11434/api/generate",
+            json={"model": "llama3.2:3b", "prompt": prompt, "stream": False},
+            timeout=60
+        )
+        response.raise_for_status()
+        return response.json().get("response", "Sin respuesta")
+    except requests.RequestException as e:
+        return f"Error al llamar a Ollama: {str(e)}"
+
+
+@app.post("/invoke")
+async def invoke_handler(request: Request):
+    data = await request.json()
+    question = data.get("input", {}).get("question", "Sin pregunta")
+
+    # Por ahora, respuesta mock
+    return JSONResponse({"answer": f"Recibido: {question}"})
+
+
+@app.post("/test-ollama")
+async def test_ollama_endpoint(request: Request):
+    """Endpoint de prueba para integrar Ollama con Graphiti"""
+    try:
+        data = await request.json()
+        prompt = data.get("prompt", "¿Qué sabes sobre Graphiti?")
+        
+        # Hacer pregunta a Ollama
+        ollama_response = ask_ollama(prompt)
+        
+        # Crear un episodio en Graphiti con la respuesta
+        if graphiti_client is not None:
+            episode_name = f"Ollama Response - {datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            episode_content = f"Pregunta: {prompt}\n\nRespuesta de Ollama: {ollama_response}"
+            
+            # Usar add_episode para guardar en Graphiti
+            result = await add_episode(
+                name=episode_name,
+                episode_body=episode_content,
+                group_id="ollama_test",
+                format="text",
+                source_description="Respuesta de Ollama guardada en Graphiti"
+            )
+            
+            return JSONResponse({
+                "success": True,
+                "prompt": prompt,
+                "ollama_response": ollama_response,
+                "graphiti_result": result,
+                "timestamp": datetime.now().isoformat()
+            })
+        else:
+            return JSONResponse({
+                "success": False,
+                "error": "Graphiti client not initialized",
+                "ollama_response": ollama_response
+            })
+            
+    except Exception as e:
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        })
+
 
 
 if __name__ == '__main__':

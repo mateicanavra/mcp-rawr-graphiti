@@ -7,7 +7,7 @@
 set -e
 
 # Base command parts
-CMD_PREFIX="uv run graphiti_mcp_server.py"
+CMD_PREFIX="python graphiti_mcp_server.py"
 CMD_ARGS="--transport sse" # Common arguments
 
 # Append arguments based on environment variables
@@ -34,8 +34,9 @@ fi
 # --entities (Optional space-separated list)
 # Assumes the python script handles a space-separated list after the flag.
 if [ -n "$MCP_ENTITIES" ]; then
-   CMD_ARGS="$CMD_ARGS --entities $MCP_ENTITIES"
+  CMD_ARGS="$CMD_ARGS --entities $MCP_ENTITIES"
 fi
+
 
 # --log-level (Pass based on ENV var)
 # Read the env var set by docker compose (from .env or compose override)

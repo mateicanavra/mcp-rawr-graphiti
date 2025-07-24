@@ -76,7 +76,7 @@ USER graphiti
 WORKDIR /app
 
 # Expose the default MCP port (adjust if needed)
-EXPOSE 8000
+EXPOSE 8010
 
 # --------------------------------------------------
 # Entrypoint / default command
