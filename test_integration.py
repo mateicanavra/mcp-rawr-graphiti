@@ -12,7 +12,7 @@ from datetime import datetime
 OLLAMA_URL = "http://192.168.100.20:11434/api/generate"
 OLLAMA_MODEL = "llama3.2:3b"
 GRAPHITI_MCP_URL = "http://localhost:8000/messages/"
-SESSION_ID = "5b6d90707c01457593e5610fc2129c66"
+SESSION_ID = "2e429d8cacf6457592e034bb23d4b5a3"
 
 def ask_ollama(prompt: str) -> str:
     """Hacer pregunta a Ollama en la VM"""
