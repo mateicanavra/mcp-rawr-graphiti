@@ -179,10 +179,13 @@
 -   **CoreModules**:
     -   CLI Logic: `graphiti_cli/`
     -   Entity Definitions: `entities/` (base definitions)
-path/to/your/project/ai/graph/entities/` (created by `graphiti entity`)
+        - Project entities live under `ai/graph/entities/` in each project
+        - `graphiti entity <set_name>` scaffolds strict Pydantic models
+        - Example templates: [`project_assets/entity_templates`](../project_assets/entity_templates/)
+        - Design guide: [`docs/entity-design-guidelines.md`](entity-design-guidelines.md)
 -   **DataStorage**: Neo4j Database (data stored in Docker volume `neo4j_data`)
 -   **Tests**: `tests/` (contains unit and functional tests)
--   **Docs**: `README.md`, `CONFIGURATION.md`, `ai/docs/`
+-   **Docs**: `README.md`, `CONFIGURATION.md`, `docs/`
 
 ## Section 7: Getting Started / Next Steps
 
@@ -190,8 +193,8 @@ path/to/your/project/ai/graph/entities/` (created by `graphiti entity`)
 -   **RunTests**: (Requires dev setup) Activate venv, `cd /path/to/rawr-mcp-graphiti`, `pip install -e ".[dev]"`, `pytest`
 -   **KeyConfiguration**:
     -   Edit `.env` in the repository root for secrets (Neo4j, OpenAI) and core settings.
-    -   Use `graphiti init <project_name>` to register new AI projects (updates `mcp-projects.yaml`).
-    -   Use `graphiti entity <set_name>` within a project directory to add custom entity definitions.
+    -   Use `graphiti init <project_name>` to register a project and scaffold `ai/graph/` with a sample entity.
+    -   Use `graphiti entity <set_name>` within a project directory to add more entity files automatically configured with `ConfigDict(extra="forbid")`.
 -   **APIEndpoint**:
     -   Root MCP Server: `http://localhost:8000` (default, check `.env` or `graphiti compose` output)
     -   Neo4j Browser UI: `http://localhost:7474` (default)
