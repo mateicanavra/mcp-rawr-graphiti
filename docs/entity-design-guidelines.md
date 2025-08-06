@@ -22,7 +22,9 @@ class Product(BaseModel):
 The `model_config` line prevents undeclared keys from being accepted and keeps
 OpenAI’s `response_format` validation happy. Graphiti internally generates some
 models dynamically; those are automatically patched to be strict, but static
-classes like the one above must include this configuration.
+classes like the one above must include this configuration. When you scaffold a
+new entity with the Graphiti CLI, the generated file already includes this
+`model_config` line so your project entities start out compliant.
 
 🧩 What Makes an Entity?
 

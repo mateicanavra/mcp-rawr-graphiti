@@ -295,10 +295,13 @@ def create_entity_set(entity_name: str, target_dir: Path):
         if not example_template_path.is_file():
             print(f"{YELLOW}Warning: Template file not found: {example_template_path}{NC}")
             print("Creating a minimal entity file instead.")
-            minimal_content = f"""from pydantic import BaseModel, Field
+            minimal_content = f"""from pydantic import BaseModel, Field, ConfigDict
 
 class {class_name}(BaseModel):
     \"\"\"Entity definition for '{entity_name}'.\"\"\"
+
+    # Disallow undeclared fields so the schema uses additionalProperties:false
+    model_config = ConfigDict(extra="forbid")
 
     example_field: str = Field(
         ...,
