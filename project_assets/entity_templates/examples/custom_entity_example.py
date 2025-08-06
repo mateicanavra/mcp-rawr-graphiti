@@ -1,6 +1,6 @@
 """Example of how to create a custom entity for Graphiti MCP Server."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Product(BaseModel):
@@ -25,6 +25,9 @@ class Product(BaseModel):
 
     **Output Format:** Respond with the extracted data structured according to this Pydantic model.
     """
+
+    # Disallow undeclared fields so the schema uses additionalProperties:false
+    model_config = ConfigDict(extra="forbid")
 
     name: str = Field(
         ...,
