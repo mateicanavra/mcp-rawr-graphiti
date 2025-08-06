@@ -20,9 +20,13 @@ Fork of the [getzep/graphiti](https://github.com/getzep/graphiti) example with a
 3. **Create a project**
    ```bash
    cd /path/to/my-kg
-   graphiti init my-kg        # writes ai/graph/mcp-config.yaml
-   # add entity definitions under ai/graph/entities/
+   graphiti init my-kg        # scaffolds ai/graph/ with a sample entity
+   graphiti entity company    # generate additional entity files as needed
    ```
+   The CLI writes Pydantic models pre‑configured with `ConfigDict(extra="forbid")` so your
+   entities are ready for OpenAI's `response_format` parsing. See
+   [`docs/entity-design-guidelines.md`](docs/entity-design-guidelines.md) for design tips and
+   explore example templates under [`project_assets/entity_templates`](project_assets/entity_templates/).
    Rerun `graphiti compose && graphiti up -d` from anywhere to start its container.
 
 Once running you can:

@@ -2,6 +2,30 @@
 
 Entity design is one of the most critical yet subtle tasks in building and maintaining knowledge graphs. The line between “entities” and “properties” can seem blurry, so follow these principles to ensure clarity, coherence, and flexibility as your graph evolves.
 
+## Defining Entities with Pydantic
+
+Graphiti loads entity definitions as Pydantic models from your project’s
+`ai/graph/entities` directory when a container starts. Each model should
+inherit from `pydantic.BaseModel` and explicitly forbid unexpected fields so
+the generated JSON schema sets `additionalProperties: false`.
+
+```python
+from pydantic import BaseModel, Field, ConfigDict
+
+class Product(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., description="Human‑readable name")
+    category: str | None = Field(None, description="Type of product")
+```
+
+The `model_config` line prevents undeclared keys from being accepted and keeps
+OpenAI’s `response_format` validation happy. Graphiti internally generates some
+models dynamically; those are automatically patched to be strict, but static
+classes like the one above must include this configuration. When you scaffold a
+new entity with the Graphiti CLI, the generated file already includes this
+`model_config` line so your project entities start out compliant.
+
 🧩 What Makes an Entity?
 
 An entity is typically a concept, object, or abstraction that:

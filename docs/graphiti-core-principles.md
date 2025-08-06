@@ -6,7 +6,7 @@ Graphiti creates **dynamic, temporally aware Knowledge Graphs (KGs)**. Unlike st
 
 ## Entities
 
-These are the core nodes in the graph, representing distinct concepts, objects, or abstractions (e.g., people, companies, products, or even abstract concepts like `Agent` or `Persona` as shown in `ai/resources/entity-design-example.md`). An entity should have a distinct identity and be meaningful enough to be queried or related to other entities. The `ai/resources/entity-design-guidelines.md` document provides excellent guidance on distinguishing between what should be an entity versus just a property of another entity (e.g., "Candidate" is a good entity, while "email address" is typically a property of a Candidate entity). Graphiti can extract entities and allows defining custom entities with specific attributes for more domain-specific modeling ([Graphiti Custom Entities](https://help.getzep.com/graphiti/graphiti/custom-entities)).
+These are the core nodes in the graph, representing distinct concepts, objects, or abstractions (e.g., people, companies, products, or even abstract concepts like `Agent` or `Persona` as shown in [`entity-design-example.md`](entity-design-example.md)). An entity should have a distinct identity and be meaningful enough to be queried or related to other entities. The [`entity-design-guidelines.md`](entity-design-guidelines.md) document provides excellent guidance on distinguishing between what should be an entity versus just a property of another entity (e.g., "Candidate" is a good entity, while "email address" is typically a property of a Candidate entity). Graphiti can extract entities and allows defining custom entities with specific attributes for more domain-specific modeling ([Graphiti Custom Entities](https://help.getzep.com/graphiti/graphiti/custom-entities)).
 
 ## Facts (Triplets)
 
@@ -26,8 +26,8 @@ Graphiti's unique strength lies in handling change. Because data is ingested as 
 
 # How it Relates to Your Resources
 
-* `ai/resources/entity-design-guidelines.md`: Provides the crucial "why" and "how" for defining what constitutes a good **Entity** within your Graphiti KG, ensuring the graph is meaningful and queryable.
-* `ai/resources/entity-design-example.md`: Shows a practical application of these guidelines, defining specific **Entities** (`Agent`, `Persona`, `Objective`, `Core Capability`, `Constraint`, `Tool`, `Interaction Model`) that could be extracted from **Episodes** (like agent prompts) to build a self-discoverable agent KG.
+* [`entity-design-guidelines.md`](entity-design-guidelines.md): Provides the crucial "why" and "how" for defining what constitutes a good **Entity** within your Graphiti KG, ensuring the graph is meaningful and queryable.
+* [`entity-design-example.md`](entity-design-example.md): Shows a practical application of these guidelines, defining specific **Entities** (`Agent`, `Persona`, `Objective`, `Core Capability`, `Constraint`, `Tool`, `Interaction Model`) that could be extracted from **Episodes** (like agent prompts) to build a self-discoverable agent KG.
 
 # In Summary
 

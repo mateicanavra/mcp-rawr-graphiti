@@ -1,6 +1,6 @@
 """Definition for a Company entity."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Company(BaseModel):
@@ -24,6 +24,9 @@ class Company(BaseModel):
     **Output Format:** Respond with the extracted data structured according to this Pydantic model.
     """
 
+    # Disallow extra fields to keep schemas strict
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(
         ...,
         description='The specific name of the company as mentioned in the text.',
@@ -31,4 +34,4 @@ class Company(BaseModel):
     industry: str | None = Field(
         default=None,
         description='The industry the company operates in (e.g., "Technology", "Finance"), if mentioned.',
-    ) 
+    )
