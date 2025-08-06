@@ -19,8 +19,8 @@ from typing import Any, Dict, List, Optional, TypedDict, Union, cast
 import traceback  # Added for detailed error logging
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-from pydantic import ValidationError  # Added for specific error handling
-from pydantic import BaseModel, Field
+import pydantic
+from pydantic import BaseModel, Field, ValidationError, ConfigDict
 
 from graphiti_core import Graphiti
 from graphiti_core.edges import EntityEdge
@@ -36,6 +36,27 @@ from graphiti_core.search.search_filters import SearchFilters
 from graphiti_core.utils.maintenance.graph_data_operations import clear_data
 from entities import get_entities, get_entity_subset, register_entity
 from constants import DEFAULT_LOG_LEVEL, DEFAULT_LLM_MODEL, ENV_GRAPHITI_LOG_LEVEL
+
+
+# Ensure dynamically created models are JSON Schema compliant with additionalProperties=false
+_original_create_model = pydantic.create_model
+
+
+def _create_model_forbid_extra(
+    model_name: str,
+    /,
+    *,
+    __config__: ConfigDict | None = None,
+    **kwargs: Any,
+) -> type[BaseModel]:
+    """Wrap pydantic.create_model enforcing extra='forbid' to produce
+    schemas with additionalProperties set to false."""
+    config = (__config__ or ConfigDict()).copy()
+    config['extra'] = 'forbid'
+    return _original_create_model(model_name, __config__=config, **kwargs)
+
+
+pydantic.create_model = _create_model_forbid_extra
 
 load_dotenv()
 
